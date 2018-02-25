@@ -3,6 +3,7 @@
 #include "GCS_Mavlink.h"
 
 #include <AP_RangeFinder/RangeFinder_Backend.h>
+#include <OGR_SensorTemp/OGR_SensorTemp_Backend.h>
 
 void Rover::send_heartbeat(mavlink_channel_t chan)
 {
@@ -258,6 +259,22 @@ void Rover::send_wheel_encoder(mavlink_channel_t chan)
     }
 }
 
+void Rover::send_ogr_sensor_temp(mavlink_channel_t chan)
+{
+    float temperature;
+
+    OGR_SensorTemp_Backend *s = ogr_sensortemp.get_backend(0);
+    if (s == nullptr) {
+        return;
+    }
+    temperature = s->temperature();
+
+    mavlink_msg_ogr_sensor_temp_send(
+        chan,
+        temperature);
+
+}
+
 uint8_t GCS_MAVLINK_Rover::sysid_my_gcs() const
 {
     return rover.g.sysid_my_gcs;
@@ -416,6 +433,11 @@ bool GCS_MAVLINK_Rover::try_send_message(enum ap_message id)
 
     case MSG_BATTERY_STATUS:
         send_battery_status(rover.battery);
+        break;
+
+    case MSG_OGR_SENSOR_TEMP:
+        CHECK_PAYLOAD_SIZE(OGR_SENSOR_TEMP);
+        rover.send_ogr_sensor_temp(chan);
         break;
 
     default:
@@ -630,6 +652,7 @@ GCS_MAVLINK_Rover::data_stream_send(void)
         send_message(MSG_EKF_STATUS_REPORT);
         send_message(MSG_VIBRATION);
         send_message(MSG_RPM);
+//        send_message(MSG_OGR_SENSOR_TEMP);
     }
 }
 

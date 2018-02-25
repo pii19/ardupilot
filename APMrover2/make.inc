@@ -52,3 +52,4 @@ LIBRARIES += AC_Fence
 LIBRARIES += AP_SmartRTL
 LIBRARIES += AC_Avoidance
 LIBRARIES += AC_AttitudeControl
+LIBRARIES += OGR_SensorTemp
