@@ -55,9 +55,10 @@ void Rover::init_rangefinder(void)
     rangefinder.init();
 }
 
-void Rover::init_ogr_sensor_temp(void)
+void Rover::init_ogr_sensors(void)
 {
-//    ogr_sensortemp.init();
+    ogr_sensor_temp.init();
+    ogr_sensor_temp_motor.init();
 }
 
 // init beacons used for non-gps position estimates

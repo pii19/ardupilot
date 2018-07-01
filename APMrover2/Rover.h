@@ -80,6 +80,7 @@
 #include <AP_Proximity/AP_Proximity.h>
 #include <AC_Avoidance/AC_Avoid.h>
 #include <OGR_SensorTemp/OGR_SensorTemp.h>
+#include <OGR_SensorTempMotor/OGR_SensorTempMotor.h>
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
 #include <SITL/SITL.h>
 #endif
@@ -166,7 +167,8 @@ private:
     AP_Button button;
 
     // OGR custom sensor drivers
-    OGR_SensorTemp ogr_sensortemp;
+    OGR_SensorTemp ogr_sensor_temp;
+    OGR_SensorTempMotor ogr_sensor_temp_motor;
 
     // flight modes convenience array
     AP_Int8 *modes;
@@ -486,6 +488,7 @@ private:
     void send_wheel_encoder(mavlink_channel_t chan);
     void send_fence_status(mavlink_channel_t chan);
     void send_ogr_sensor_temp(mavlink_channel_t chan);
+    void send_ogr_sensor_temp_motor(mavlink_channel_t chan);
     void gcs_data_stream_send(void);
     void gcs_update(void);
     void gcs_retry_deferred(void);
@@ -529,7 +532,7 @@ private:
     void compass_accumulate(void);
     void init_barometer(bool full_calibration);
     void init_rangefinder(void);
-    void init_ogr_sensor_temp(void);
+    void init_ogr_sensors(void);
     void init_beacon();
     void init_visual_odom();
     void update_visual_odom();

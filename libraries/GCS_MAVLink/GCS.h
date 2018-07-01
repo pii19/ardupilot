@@ -82,6 +82,8 @@ enum ap_message {
     MSG_LANDING,
     MSG_NAMED_FLOAT,
     MSG_OGR_SENSOR_TEMP,
+    MSG_OGR_SENSOR_TEMP_MOTOR,
+    MSG_OGR_SENSOR_GAS,
     MSG_LAST // MSG_LAST must be the last entry in this enum
 };
 

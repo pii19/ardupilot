@@ -4,6 +4,7 @@
 
 #include <AP_RangeFinder/RangeFinder_Backend.h>
 #include <OGR_SensorTemp/OGR_SensorTemp_Backend.h>
+#include <OGR_SensorTempMotor/OGR_SensorTempMotor_Backend.h>
 
 void Rover::send_heartbeat(mavlink_channel_t chan)
 {
@@ -261,18 +262,51 @@ void Rover::send_wheel_encoder(mavlink_channel_t chan)
 
 void Rover::send_ogr_sensor_temp(mavlink_channel_t chan)
 {
-    float temperature;
+    float temp[OGR_SENSORTEMP_MAX_INSTANCES];
 
-    OGR_SensorTemp_Backend *s = ogr_sensortemp.get_backend(0);
-    if (s == nullptr) {
-        return;
+    for (uint8_t i=0; i<OGR_SENSORTEMP_MAX_INSTANCES; i++) {
+        OGR_SensorTemp_Backend *s = ogr_sensor_temp.get_backend(i);
+        temp[i] = 0.0;
+        if (s != nullptr) {
+            temp[i] = s->temperature();
+        }
     }
-    temperature = s->temperature();
 
     mavlink_msg_ogr_sensor_temp_send(
         chan,
-        temperature);
+        temp[0], temp[1] );
+}
 
+void Rover::send_ogr_sensor_temp_motor(mavlink_channel_t chan)
+{
+#if true
+    float temp[OGR_SENSORTEMPMOTOR_USE_CH];
+    float volt[OGR_SENSORTEMPMOTOR_USE_CH];
+
+    OGR_SensorTempMotor_Backend *s = ogr_sensor_temp_motor.get_backend(0);
+    if (s != nullptr) {
+		for (uint8_t i=0; i<OGR_SENSORTEMPMOTOR_USE_CH; i++) {
+			temp[i] = s->state.temperature[i];
+			volt[i] = s->state.voltage[i];
+        }
+    }
+#else
+    float temp[OGR_SENSORTEMPMOTOR_MAX_INSTANCES];
+    float volt[OGR_SENSORTEMPMOTOR_MAX_INSTANCES];
+
+    for (uint8_t i=0; i<OGR_SENSORTEMPMOTOR_MAX_INSTANCES; i++) {
+        OGR_SensorTempMotor_Backend *s = ogr_sensor_temp_motor.get_backend(i);
+        temp[i] = 0.0;
+        volt[i] = 0.0;
+        if (s != nullptr) {
+            temp[i] = s->temperature();
+            volt[i] = s->voltage();
+        }
+    }
+#endif
+    mavlink_msg_ogr_sensor_temp_motor_send(
+        chan,
+        temp[0], volt[0], temp[1], volt[1], temp[2], volt[2], temp[3], volt[3] );
 }
 
 uint8_t GCS_MAVLINK_Rover::sysid_my_gcs() const
@@ -438,6 +472,11 @@ bool GCS_MAVLINK_Rover::try_send_message(enum ap_message id)
     case MSG_OGR_SENSOR_TEMP:
         CHECK_PAYLOAD_SIZE(OGR_SENSOR_TEMP);
         rover.send_ogr_sensor_temp(chan);
+        break;
+
+    case MSG_OGR_SENSOR_TEMP_MOTOR:
+        CHECK_PAYLOAD_SIZE(OGR_SENSOR_TEMP_MOTOR);
+        rover.send_ogr_sensor_temp_motor(chan);
         break;
 
     default:
@@ -652,7 +691,8 @@ GCS_MAVLINK_Rover::data_stream_send(void)
         send_message(MSG_EKF_STATUS_REPORT);
         send_message(MSG_VIBRATION);
         send_message(MSG_RPM);
-//        send_message(MSG_OGR_SENSOR_TEMP);
+        send_message(MSG_OGR_SENSOR_TEMP);
+        send_message(MSG_OGR_SENSOR_TEMP_MOTOR);
     }
 }
 

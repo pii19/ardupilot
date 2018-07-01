@@ -70,7 +70,7 @@ void AP_RangeFinder_LightWareI2C::init()
 // read - return last value measured by sensor
 bool AP_RangeFinder_LightWareI2C::get_reading(uint16_t &reading_cm)
 {
-#if true
+#if false
     be16_t val;
     uint16_t uval;
     int ival;

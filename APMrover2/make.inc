@@ -53,3 +53,4 @@ LIBRARIES += AP_SmartRTL
 LIBRARIES += AC_Avoidance
 LIBRARIES += AC_AttitudeControl
 LIBRARIES += OGR_SensorTemp
+LIBRARIES += OGR_SensorTempMotor

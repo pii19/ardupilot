@@ -13,48 +13,61 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "OGR_SensorTemp.h"
-#include "OGR_SensorTemp_ADT7410.h"
+#include "OGR_SensorTempMotor.h"
+#include "OGR_SensorTempMotor_ADS1015_S8120C.h"
 #include <AP_BoardConfig/AP_BoardConfig.h>
 
 extern const AP_HAL::HAL &hal;
 
 // table of user settable parameters
-const AP_Param::GroupInfo OGR_SensorTemp::var_info[] = {
-    // @Param: TEMP_OUTER_TYPE
-    // @DisplayName: Temparatur sensor type
+const AP_Param::GroupInfo OGR_SensorTempMotor::var_info[] = {
+    // @Param: TEMP_MOTOR_TYPE
+    // @DisplayName: Temperature sensor type
     // @Description: What type of sensor device that is connected
-    // @Values: 0:None,1:ADT7410
+    // @Values: 0:None,1:ADS1015_S8120C
     // @User: Standard
-    AP_GROUPINFO("_OUTER_TYPE", 0, OGR_SensorTemp, state[0].type, 1),
+    AP_GROUPINFO("_TYPE", 0, OGR_SensorTempMotor, state[0].type, 1),
 
-    // @Param: TEMP_OUTER_ADDR
+    // @Param: TEMP_MOTOR_ADDR
     // @DisplayName: Bus address of sensor
     // @Description: This sets the I2C bus address of the sensor, where applicable. A value of 0 disables the sensor.
     // @Range: 0 127
     // @Increment: 1
     // @User: Standard
-    AP_GROUPINFO("_OUTER_ADDR", 1, OGR_SensorTemp, state[0].address, 0x48),
+    AP_GROUPINFO("_ADDR", 1, OGR_SensorTempMotor, state[0].address, 0x4A),
 
-    // @Param: TEMP_INNER_TYPE
-    // @DisplayName: Temparatur sensor type
-    // @Description: What type of sensor device that is connected
-    // @Values: 0:None,1:ADT7410
+    // @Param: TEMP_MOTOR_CH1
+    // @DisplayName: Temperature sensor cahnnels number
+    // @Description: Using channels number at I2C ADC
+    // @Range: 0 4
     // @User: Standard
-    AP_GROUPINFO("_INNER_TYPE", 2, OGR_SensorTemp, state[1].type, 1),
+    AP_GROUPINFO("1_CH", 2, OGR_SensorTempMotor, state[0].ch[0], 1),
 
-    // @Param: TEMP_INNER_ADDR
-    // @DisplayName: Bus address of sensor
-    // @Description: This sets the I2C bus address of the sensor, where applicable. A value of 0 disables the sensor.
-    // @Range: 0 127
-    // @Increment: 1
+    // @Param: TEMP_MOTOR_CH2
+    // @DisplayName: Temperature sensor cahnnels number
+    // @Description: Using channels number at I2C ADC
+    // @Range: 0 4
     // @User: Standard
-    AP_GROUPINFO("_INNER_ADDR", 3, OGR_SensorTemp, state[1].address, 0x49),
+    AP_GROUPINFO("2_CH", 3, OGR_SensorTempMotor, state[0].ch[1], 2),
+
+    // @Param: TEMP_MOTOR_CH3
+    // @DisplayName: Temperature sensor cahnnels number
+    // @Description: Using channels number at I2C ADC
+    // @Range: 0 4
+    // @User: Standard
+    AP_GROUPINFO("3_CH", 4, OGR_SensorTempMotor, state[0].ch[2], 3),
+
+    // @Param: TEMP_MOTOR_CH4
+    // @DisplayName: Temperature sensor cahnnels number
+    // @Description: Using channels number at I2C ADC
+    // @Range: 0 4
+    // @User: Standard
+    AP_GROUPINFO("4_CH", 5, OGR_SensorTempMotor, state[0].ch[3], 4),
 
     AP_GROUPEND
 };
 
-OGR_SensorTemp::OGR_SensorTemp() :
+OGR_SensorTempMotor::OGR_SensorTempMotor() :
     num_instances(0)
 {
     AP_Param::setup_object_defaults(this, var_info);
@@ -64,13 +77,13 @@ OGR_SensorTemp::OGR_SensorTemp() :
   initialise the OGR SensorTemp class. We do detection of attached sensors
   here. For now we won't allow for hot-plugging of several sensors.
 */
-void OGR_SensorTemp::init(void)
+void OGR_SensorTempMotor::init(void)
 {
     if (num_instances != 0) {
         // init called a 2nd time?
         return;
     }
-    for (uint8_t i=0; i<OGR_SENSORTEMP_MAX_INSTANCES; i++) {
+    for (uint8_t i=0; i<OGR_SENSORTEMPMOTOR_MAX_INSTANCES; i++) {
         detect_instance(i);
         if (drivers[i] != nullptr) {
             // we loaded a driver for this instance, so it must be
@@ -83,11 +96,12 @@ void OGR_SensorTemp::init(void)
         state[i].pre_arm_temperature_max = -10000;  // initialise to an arbitrary small value
 
         // initialise min/max temperature variables
-        state[i].min_temperature = OGR_SENSORTEMP_PREARM_ALT_MIN_TEMP;
-        state[i].max_temperature = OGR_SENSORTEMP_PREARM_ALT_MAX_TEMP;
-
+    for (uint8_t j=0; j<OGR_SENSORTEMPMOTOR_USE_CH; j++) {
+        state[i].min_temperature[j] = OGR_SENSORTEMPMOTOR_PREARM_ALT_MIN_TEMP;
+        state[i].max_temperature[j] = OGR_SENSORTEMPMOTOR_PREARM_ALT_MAX_TEMP;
+	}
         // initialise status
-        state[i].status = OGR_SensorTemp_NotConnected;
+        state[i].status = OGR_SensorTempMotor_NotConnected;
         state[i].valid_count = 0;
     }
 }
@@ -96,13 +110,13 @@ void OGR_SensorTemp::init(void)
   update state for all instances. This should be called at
   around 10Hz by main loop
  */
-void OGR_SensorTemp::update(void)
+void OGR_SensorTempMotor::update(void)
 {
-    for (uint8_t i=0; i<OGR_SENSORTEMP_MAX_INSTANCES; i++) {
+    for (uint8_t i=0; i<OGR_SENSORTEMPMOTOR_MAX_INSTANCES; i++) {
         if (drivers[i] != nullptr) {
-            if (state[i].type == OGR_SensorTemp_TYPE_NONE) {
+            if (state[i].type == OGR_SensorTempMotor_TYPE_NONE) {
                 // allow user to disable a sensor at runtime
-                state[i].status = OGR_SensorTemp_NotConnected;
+                state[i].status = OGR_SensorTempMotor_NotConnected;
                 state[i].valid_count = 0;
                 continue;
             }
@@ -112,12 +126,12 @@ void OGR_SensorTemp::update(void)
     }
 }
 
-bool OGR_SensorTemp::_add_backend(OGR_SensorTemp_Backend *backend)
+bool OGR_SensorTempMotor::_add_backend(OGR_SensorTempMotor_Backend *backend)
 {
     if (!backend) {
         return false;
     }
-    if (num_instances == OGR_SENSORTEMP_MAX_INSTANCES) {
+    if (num_instances == OGR_SENSORTEMPMOTOR_MAX_INSTANCES) {
         AP_HAL::panic("Too many OGR temperature sensor backends");
     }
 
@@ -128,14 +142,14 @@ bool OGR_SensorTemp::_add_backend(OGR_SensorTemp_Backend *backend)
 /*
   detect if an instance of a sensor is connected. 
  */
-void OGR_SensorTemp::detect_instance(uint8_t instance)
+void OGR_SensorTempMotor::detect_instance(uint8_t instance)
 {
-    enum OGR_SensorTemp_Type _type = (enum OGR_SensorTemp_Type)state[instance].type.get();
+    enum OGR_SensorTempMotor_Type _type = (enum OGR_SensorTempMotor_Type)state[instance].type.get();
     switch (_type) {
-    case OGR_SensorTemp_TYPE_ADT7410:
+    case OGR_SensorTempMotor_TYPE_ADS1015_S8120C:
         if (state[instance].address) {
-            if (!_add_backend(OGR_SensorTemp_ADT7410::detect(state[instance], hal.i2c_mgr->get_device(1, state[instance].address)))) {
-                _add_backend(OGR_SensorTemp_ADT7410::detect(state[instance], hal.i2c_mgr->get_device(0, state[instance].address)));
+            if (!_add_backend(OGR_SensorTempMotor_ADS1015_S8120C::detect(state[instance], hal.i2c_mgr->get_device(1, state[instance].address)))) {
+                _add_backend(OGR_SensorTempMotor_ADS1015_S8120C::detect(state[instance], hal.i2c_mgr->get_device(0, state[instance].address)));
             }
         }
         break;
@@ -144,12 +158,12 @@ void OGR_SensorTemp::detect_instance(uint8_t instance)
     }
 }
 
-OGR_SensorTemp_Backend *OGR_SensorTemp::get_backend(uint8_t id) const {
+OGR_SensorTempMotor_Backend *OGR_SensorTempMotor::get_backend(uint8_t id) const {
     if (id >= num_instances) {
         return nullptr;
     }
     if (drivers[id] != nullptr) {
-        if (drivers[id]->type() == OGR_SensorTemp_TYPE_NONE) {
+        if (drivers[id]->type() == OGR_SensorTempMotor_TYPE_NONE) {
             // pretend it isn't here; disabled at runtime?
             return nullptr;
         }
@@ -162,11 +176,11 @@ OGR_SensorTemp_Backend *OGR_SensorTemp::get_backend(uint8_t id) const {
   these checks involve the user lifting or rotating the vehicle so that sensor readings between
   the min and 2m can be captured
  */
-bool OGR_SensorTemp::pre_arm_check() const
+bool OGR_SensorTempMotor::pre_arm_check() const
 {
     for (uint8_t i=0; i<num_instances; i++) {
         // if driver is valid but pre_arm_check is false, return false
-        if ((drivers[i] != nullptr) && (state[i].type != OGR_SensorTemp_TYPE_NONE) && !state[i].pre_arm_check) {
+        if ((drivers[i] != nullptr) && (state[i].type != OGR_SensorTempMotor_TYPE_NONE) && !state[i].pre_arm_check) {
             return false;
         }
     }

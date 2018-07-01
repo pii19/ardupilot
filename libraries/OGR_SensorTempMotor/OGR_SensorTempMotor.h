@@ -20,52 +20,55 @@
 #include <AP_Math/AP_Math.h>
 
 // Maximum number of temperature sensor instances available on this platform
-#define OGR_SENSORTEMP_MAX_INSTANCES 2
-#define OGR_SENSORTEMP_PREARM_ALT_MAX_TEMP           150.0
-#define OGR_SENSORTEMP_PREARM_ALT_MIN_TEMP           -55.0
+#define OGR_SENSORTEMPMOTOR_MAX_INSTANCES           1
+#define OGR_SENSORTEMPMOTOR_PREARM_ALT_MAX_TEMP     100.0
+#define OGR_SENSORTEMPMOTOR_PREARM_ALT_MIN_TEMP     -30.0
+#define OGR_SENSORTEMPMOTOR_USE_CH                  4
 
-class OGR_SensorTemp_Backend;
+class OGR_SensorTempMotor_Backend;
 
-class OGR_SensorTemp
+class OGR_SensorTempMotor
 {
-    friend class OGR_SensorTemp_Backend;
+    friend class OGR_SensorTempMotor_Backend;
 
 public:
-    OGR_SensorTemp(void);
+    OGR_SensorTempMotor(void);
 
     /* Do not allow copies */
-    OGR_SensorTemp(const OGR_SensorTemp &other) = delete;
-    OGR_SensorTemp &operator=(const OGR_SensorTemp&) = delete;
+    OGR_SensorTempMotor(const OGR_SensorTempMotor &other) = delete;
+    OGR_SensorTempMotor &operator=(const OGR_SensorTempMotor&) = delete;
 
     // sensor driver types
-    enum OGR_SensorTemp_Type {
-        OGR_SensorTemp_TYPE_NONE    = 0,
-        OGR_SensorTemp_TYPE_ADT7410 = 1,
+    enum OGR_SensorTempMotor_Type {
+        OGR_SensorTempMotor_TYPE_NONE    = 0,
+        OGR_SensorTempMotor_TYPE_ADS1015_S8120C = 1
     };
 
-    enum OGR_SensorTemp_Status {
-        OGR_SensorTemp_NotConnected = 0,
-        OGR_SensorTemp_NoData,
-        OGR_SensorTemp_OutOfRangeLow,
-        OGR_SensorTemp_OutOfRangeHigh,
-        OGR_SensorTemp_Good
+    enum OGR_SensorTempMotor_Status {
+        OGR_SensorTempMotor_NotConnected = 0,
+        OGR_SensorTempMotor_NoData,
+        OGR_SensorTempMotor_OutOfRangeLow,
+        OGR_SensorTempMotor_OutOfRangeHigh,
+        OGR_SensorTempMotor_Good
     };
 
-    // The OGR_SensorTemp_State structure is filled in by the backend driver
-    struct OGR_SensorTemp_State {
-        uint8_t                instance;    // the instance number of this OGR_SensorTemp
-        float                  temperature; // temperature: in celsius
-                                            // if applicable, otherwise 0
-        enum OGR_SensorTemp_Status status;     // sensor status
+    // The OGR_SensorTempMotor_State structure is filled in by the backend driver
+    struct OGR_SensorTempMotor_State {
+        uint8_t                instance;    // the instance number of this OGR_SensorTempMotor
+        float                  temperature[OGR_SENSORTEMPMOTOR_USE_CH]; // temperature: in celsius
+        float                  voltage[OGR_SENSORTEMPMOTOR_USE_CH];  // voltage
+
+        enum OGR_SensorTempMotor_Status status;     // sensor status
         uint8_t                valid_count;   // number of consecutive valid readings (maxes out at 10)
         bool                   pre_arm_check;   // true if sensor has passed pre-arm checks
         float                  pre_arm_temperature_min;    // min temperature captured during pre-arm checks
         float                  pre_arm_temperature_max;    // max temperature captured during pre-arm checks
 
         AP_Int8  type;
-        AP_Float min_temperature;
-        AP_Float max_temperature;
         AP_Int8  address;
+        AP_Float min_temperature[OGR_SENSORTEMPMOTOR_USE_CH];
+        AP_Float max_temperature[OGR_SENSORTEMPMOTOR_USE_CH];
+        AP_Int8  ch[OGR_SENSORTEMPMOTOR_USE_CH]; //using ADC channel number
     };
 
     // parameters for each instance
@@ -83,7 +86,7 @@ public:
     // 10Hz from main loop
     void update(void);
 
-    OGR_SensorTemp_Backend *get_backend(uint8_t id) const;
+    OGR_SensorTempMotor_Backend *get_backend(uint8_t id) const;
 
     /*
       returns true if pre-arm checks have passed for all temperature sensors
@@ -94,12 +97,12 @@ public:
 
 
 private:
-    OGR_SensorTemp_State state[OGR_SENSORTEMP_MAX_INSTANCES];
-    OGR_SensorTemp_Backend *drivers[OGR_SENSORTEMP_MAX_INSTANCES];
-    uint8_t num_instances:2;
+    OGR_SensorTempMotor_State state[OGR_SENSORTEMPMOTOR_MAX_INSTANCES];
+    OGR_SensorTempMotor_Backend *drivers[OGR_SENSORTEMPMOTOR_MAX_INSTANCES];
+    uint8_t num_instances:1;
 
     void detect_instance(uint8_t instance);
     void update_instance(uint8_t instance);  
 
-    bool _add_backend(OGR_SensorTemp_Backend *driver);
+    bool _add_backend(OGR_SensorTempMotor_Backend *driver);
 };

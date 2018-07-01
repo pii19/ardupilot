@@ -359,7 +359,15 @@ const AP_Param::Info Rover::var_info[] = {
     // @Group: RNGFND
     // @Path: ../libraries/AP_RangeFinder/RangeFinder.cpp
     GOBJECT(rangefinder,                 "RNGFND", RangeFinder),
+/*
+    // @Group: OGRTEMP
+    // @Path: ../libraries/OGR_SensorTemp/OGR_SensorTemp.cpp
+    GOBJECT(ogr_sensor_temp,        "TEMP", OGR_SensorTemp),
 
+    // @Group: OGRTEMPMOTOR
+    // @Path: ../libraries/OGR_SensorTempMotor/OGR_SensorTempMotor.cpp
+    GOBJECT(ogr_sensor_temp_motor,        "TEMP_MOTOR", OGR_SensorTempMotor),
+*/
     // @Group: INS_
     // @Path: ../libraries/AP_InertialSensor/AP_InertialSensor.cpp
     GOBJECT(ins,                            "INS_", AP_InertialSensor),
