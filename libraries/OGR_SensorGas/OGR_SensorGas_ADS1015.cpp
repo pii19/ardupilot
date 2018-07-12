@@ -102,6 +102,11 @@ bool OGR_SensorGas_ADS1015::get_reading(void)
 
 
 
+
+
+
+
+
 				}
 			}
 		}

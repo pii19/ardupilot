@@ -146,7 +146,7 @@ void OGR_SensorGas::detect_instance(uint8_t instance)
 {
     enum OGR_SensorGas_Type _type = (enum OGR_SensorGas_Type)state[instance].type.get();
     switch (_type) {
-    case OGR_SensorGas_TYPE_ADS1015_S8120C:
+    case OGR_SensorGas_TYPE_ADS1015:
         if (state[instance].address) {
             if (!_add_backend(OGR_SensorGas_ADS1015::detect(state[instance], hal.i2c_mgr->get_device(1, state[instance].address)))) {
                 _add_backend(OGR_SensorGas_ADS1015::detect(state[instance], hal.i2c_mgr->get_device(0, state[instance].address)));
