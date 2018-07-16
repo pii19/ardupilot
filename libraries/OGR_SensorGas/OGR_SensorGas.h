@@ -19,11 +19,11 @@
 #include <AP_Param/AP_Param.h>
 #include <AP_Math/AP_Math.h>
 
-// Maximum number of temperature sensor instances available on this platform
+// Maximum number of gas sensor instances available on this platform
 #define OGR_SENSORGAS_MAX_INSTANCES           1
 #define OGR_SENSORGAS_PREARM_ALT_MAX_TEMP     100.0
 #define OGR_SENSORGAS_PREARM_ALT_MIN_TEMP     -30.0
-#define OGR_SENSORGAS_USE_CH                  4
+#define OGR_SENSORGAS_USE_CH                  3     // value <= 3
 
 class OGR_SensorGas_Backend;
 
@@ -55,41 +55,41 @@ public:
     // The OGR_SensorGas_State structure is filled in by the backend driver
     struct OGR_SensorGas_State {
         uint8_t                instance;    // the instance number of this OGR_SensorGas
-        float                  temperature[OGR_SENSORGAS_USE_CH]; // temperature: in celsius
+        float                  concentration[OGR_SENSORGAS_USE_CH]; // concentration
         float                  voltage[OGR_SENSORGAS_USE_CH];  // voltage
 
         enum OGR_SensorGas_Status status;     // sensor status
         uint8_t                valid_count;   // number of consecutive valid readings (maxes out at 10)
         bool                   pre_arm_check;   // true if sensor has passed pre-arm checks
-        float                  pre_arm_temperature_min;    // min temperature captured during pre-arm checks
-        float                  pre_arm_temperature_max;    // max temperature captured during pre-arm checks
+        float                  pre_arm_concentration_min;    // min concentration captured during pre-arm checks
+        float                  pre_arm_concentration_max;    // max concentration captured during pre-arm checks
 
         AP_Int8  type;
         AP_Int8  address;
-        AP_Float min_temperature[OGR_SENSORGAS_USE_CH];
-        AP_Float max_temperature[OGR_SENSORGAS_USE_CH];
+        AP_Float min_concentration[OGR_SENSORGAS_USE_CH];
+        AP_Float max_concentration[OGR_SENSORGAS_USE_CH];
         AP_Int8  ch[OGR_SENSORGAS_USE_CH]; //using ADC channel number
     };
 
     // parameters for each instance
     static const struct AP_Param::GroupInfo var_info[];
     
-    // Return the number of temperature sensor instances
+    // Return the number of concentration sensor instances
     uint8_t num_sensors(void) const {
         return num_instances;
     }
 
-    // detect and initialise any available temperature sensors
+    // detect and initialise any available concentration sensors
     void init(void);
 
-    // update state of all temperature sensors. Should be called at around
+    // update state of all concentration sensors. Should be called at around
     // 10Hz from main loop
     void update(void);
 
     OGR_SensorGas_Backend *get_backend(uint8_t id) const;
 
     /*
-      returns true if pre-arm checks have passed for all temperature sensors
+      returns true if pre-arm checks have passed for all concentration sensors
       these checks involve the user lifting or rotating the vehicle so that sensor readings between
       the min and 2m can be captured
      */

@@ -22,7 +22,7 @@ extern const AP_HAL::HAL &hal;
 // table of user settable parameters
 const AP_Param::GroupInfo OGR_SensorGas::var_info[] = {
     // @Param: TEMP_MOTOR_TYPE
-    // @DisplayName: Temperature sensor type
+    // @DisplayName: gas sensor type
     // @Description: What type of sensor device that is connected
     // @Values: 0:None,1:ADS1015
     // @User: Standard
@@ -37,28 +37,28 @@ const AP_Param::GroupInfo OGR_SensorGas::var_info[] = {
     AP_GROUPINFO("_ADDR", 1, OGR_SensorGas, state[0].address, 0x4B),
 
     // @Param: TEMP_MOTOR_CH1
-    // @DisplayName: Temperature sensor cahnnels number
+    // @DisplayName: gas sensor cahnnels number
     // @Description: Using channels number at I2C ADC
     // @Range: 0 4
     // @User: Standard
     AP_GROUPINFO("1_CH", 2, OGR_SensorGas, state[0].ch[0], 1),
 
     // @Param: TEMP_MOTOR_CH2
-    // @DisplayName: Temperature sensor cahnnels number
+    // @DisplayName: gas sensor cahnnels number
     // @Description: Using channels number at I2C ADC
     // @Range: 0 4
     // @User: Standard
     AP_GROUPINFO("2_CH", 3, OGR_SensorGas, state[0].ch[1], 2),
 
     // @Param: TEMP_MOTOR_CH3
-    // @DisplayName: Temperature sensor cahnnels number
+    // @DisplayName: gas sensor cahnnels number
     // @Description: Using channels number at I2C ADC
     // @Range: 0 4
     // @User: Standard
     AP_GROUPINFO("3_CH", 4, OGR_SensorGas, state[0].ch[2], 3),
 
     // @Param: TEMP_MOTOR_CH4
-    // @DisplayName: Temperature sensor cahnnels number
+    // @DisplayName: gas sensor cahnnels number
     // @Description: Using channels number at I2C ADC
     // @Range: 0 4
     // @User: Standard
@@ -92,13 +92,13 @@ void OGR_SensorGas::init(void)
         num_instances = i+1;
         // initialise pre-arm check variables
         state[i].pre_arm_check = false;
-        state[i].pre_arm_temperature_min = 9999;  // initialise to an arbitrary large value
-        state[i].pre_arm_temperature_max = -10000;  // initialise to an arbitrary small value
+        state[i].pre_arm_concentration_min = 9999;  // initialise to an arbitrary large value
+        state[i].pre_arm_concentration_max = -10000;  // initialise to an arbitrary small value
 
-        // initialise min/max temperature variables
+        // initialise min/max concentration variables
     for (uint8_t j=0; j<OGR_SENSORGAS_USE_CH; j++) {
-        state[i].min_temperature[j] = OGR_SENSORGAS_PREARM_ALT_MIN_TEMP;
-        state[i].max_temperature[j] = OGR_SENSORGAS_PREARM_ALT_MAX_TEMP;
+        state[i].min_concentration[j] = OGR_SENSORGAS_PREARM_ALT_MIN_TEMP;
+        state[i].max_concentration[j] = OGR_SENSORGAS_PREARM_ALT_MAX_TEMP;
 	}
         // initialise status
         state[i].status = OGR_SensorGas_NotConnected;

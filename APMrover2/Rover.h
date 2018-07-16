@@ -81,6 +81,7 @@
 #include <AC_Avoidance/AC_Avoid.h>
 #include <OGR_SensorTemp/OGR_SensorTemp.h>
 #include <OGR_SensorTempMotor/OGR_SensorTempMotor.h>
+#include <OGR_SensorGas/OGR_SensorGas.h>
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
 #include <SITL/SITL.h>
 #endif
@@ -169,6 +170,7 @@ private:
     // OGR custom sensor drivers
     OGR_SensorTemp ogr_sensor_temp;
     OGR_SensorTempMotor ogr_sensor_temp_motor;
+    OGR_SensorGas ogr_sensor_gas;
 
     // flight modes convenience array
     AP_Int8 *modes;
@@ -489,6 +491,7 @@ private:
     void send_fence_status(mavlink_channel_t chan);
     void send_ogr_sensor_temp(mavlink_channel_t chan);
     void send_ogr_sensor_temp_motor(mavlink_channel_t chan);
+    void send_ogr_sensor_gas(mavlink_channel_t chan);
     void gcs_data_stream_send(void);
     void gcs_update(void);
     void gcs_retry_deferred(void);

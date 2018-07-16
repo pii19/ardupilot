@@ -85,7 +85,7 @@ bool OGR_SensorGas_ADS1015::get_reading(void)
 //        volt = (float)ival*2.048/2048; // convert to voltage
 					state.voltage[i] = (float)ival*0.001; // convert to voltage
 //        temp = ((volt*1000) - 1705)/-8.2; // convert to celsius value
-					state.temperature[i] = ((float)ival - 1705)/-8.2; // convert to celsius value
+					state.concentration[i] = ((float)ival - 1705)/-8.2; // convert to celsius value
 //        temp = 0.0005*(temp^2) - 0.0299*temp - 1.3426; // correct celsius value
 					ret = true;
 					// Wait for the next conversion
@@ -125,7 +125,7 @@ int OGR_SensorGas_ADS1015::convert(be16_t val)
         uval >>= 4;
         ival = (int)uval; // 
         if(uval & (0x8000 >> 4)) {
-            ival -= 1 << 12; // when temperature is negative number
+            ival -= 1 << 12; // when concentration is negative number
         }
 
         return ival;
@@ -194,7 +194,7 @@ void OGR_SensorGas_ADS1015::update(void)
 void OGR_SensorGas_ADS1015::timer(void)
 {
     if (get_reading()) {
-        // update temp_valid state based on temperature measured
+        // update temp_valid state based on concentration measured
         update_status();
     } else {
         set_status(OGR_SensorGas::OGR_SensorGas_NoData);
