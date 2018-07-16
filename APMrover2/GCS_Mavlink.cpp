@@ -5,6 +5,7 @@
 #include <AP_RangeFinder/RangeFinder_Backend.h>
 #include <OGR_SensorTemp/OGR_SensorTemp_Backend.h>
 #include <OGR_SensorTempMotor/OGR_SensorTempMotor_Backend.h>
+#include <OGR_SensorGas/OGR_SensorGas_Backend.h>
 
 void Rover::send_heartbeat(mavlink_channel_t chan)
 {
@@ -280,8 +281,8 @@ void Rover::send_ogr_sensor_temp(mavlink_channel_t chan)
 void Rover::send_ogr_sensor_temp_motor(mavlink_channel_t chan)
 {
 #if true
-    float temp[OGR_SENSORTEMPMOTOR_USE_CH];
-    float volt[OGR_SENSORTEMPMOTOR_USE_CH];
+    float temp[4];
+    float volt[4];
 
     OGR_SensorTempMotor_Backend *s = ogr_sensor_temp_motor.get_backend(0);
     if (s != nullptr) {
@@ -307,6 +308,24 @@ void Rover::send_ogr_sensor_temp_motor(mavlink_channel_t chan)
     mavlink_msg_ogr_sensor_temp_motor_send(
         chan,
         temp[0], volt[0], temp[1], volt[1], temp[2], volt[2], temp[3], volt[3] );
+}
+
+void Rover::send_ogr_sensor_gas(mavlink_channel_t chan)
+{
+    float concent[3];
+    float volt[3];
+
+    OGR_SensorGas_Backend *s = ogr_sensor_gas.get_backend(0);
+    if (s != nullptr) {
+		for (uint8_t i=0; i<OGR_SENSORGAS_USE_CH; i++) {
+			concent[i] = s->state.concentration[i];
+			volt[i] = s->state.voltage[i];
+        }
+    }
+
+    mavlink_msg_ogr_sensor_gas_send(
+        chan,
+        concent[0], volt[0], concent[1], volt[1], concent[2], volt[2] );
 }
 
 uint8_t GCS_MAVLINK_Rover::sysid_my_gcs() const
@@ -477,6 +496,11 @@ bool GCS_MAVLINK_Rover::try_send_message(enum ap_message id)
     case MSG_OGR_SENSOR_TEMP_MOTOR:
         CHECK_PAYLOAD_SIZE(OGR_SENSOR_TEMP_MOTOR);
         rover.send_ogr_sensor_temp_motor(chan);
+        break;
+
+    case MSG_OGR_SENSOR_GAS:
+        CHECK_PAYLOAD_SIZE(OGR_SENSOR_GAS);
+        rover.send_ogr_sensor_gas(chan);
         break;
 
     default:
@@ -693,6 +717,7 @@ GCS_MAVLINK_Rover::data_stream_send(void)
         send_message(MSG_RPM);
         send_message(MSG_OGR_SENSOR_TEMP);
         send_message(MSG_OGR_SENSOR_TEMP_MOTOR);
+        send_message(MSG_OGR_SENSOR_GAS);
     }
 }
 

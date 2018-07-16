@@ -35,10 +35,10 @@ public:
 
     uint8_t instance() const { return state.instance; }
 /*
-    float temperature() const { return state.temperature; }
+    float concentration() const { return state.concentration; }
     float voltage() const { return state.voltage; }
-    float min_temperature() const { return state.min_temperature; }
-    float max_temperature() const { return state.max_temperature; }
+    float min_concentration() const { return state.min_concentration; }
+    float max_concentration() const { return state.max_concentration; }
 */
     OGR_SensorGas::OGR_SensorGas_Status status() const {
         if (state.type == OGR_SensorGas::OGR_SensorGas_TYPE_NONE) {

@@ -30,14 +30,14 @@ OGR_SensorGas_Backend::OGR_SensorGas_Backend(OGR_SensorGas::OGR_SensorGas_State 
     _sem = hal.util->new_semaphore();    
 }
 
-// update status based on temperature measurement
+// update status based on concentration measurement
 void OGR_SensorGas_Backend::update_status()
 {
 /*
-    // check temperature
-    if (state.temperature > state.max_temperature) {
+    // check concentration
+    if (state.concentration > state.max_concentration) {
         set_status(OGR_SensorGas::OGR_SensorGas_OutOfRangeHigh);
-    } else if ((int16_t)state.temperature < state.min_temperature) {
+    } else if ((int16_t)state.concentration < state.min_concentration) {
         set_status(OGR_SensorGas::OGR_SensorGas_OutOfRangeLow);
     } else {
         set_status(OGR_SensorGas::OGR_SensorGas_Good);
@@ -61,10 +61,10 @@ void OGR_SensorGas_Backend::set_status(OGR_SensorGas::OGR_SensorGas_Status _stat
 }
 
 /*
-  set pre-arm checks to passed if the temperature sensor has been exercised through a reasonable range of movement
-      max temperature sensed is at least 50cm > min temperature sensed
-      max temperature < 100 c
-      min temperature sensed is within 10cm of ground clearance or sensor's temperature
+  set pre-arm checks to passed if the gas sensor has been exercised through a reasonable range of movement
+      max concentration sensed is at least 50cm > min concentration sensed
+      max concentration < 100 c
+      min concentration sensed is within 10cm of ground clearance or sensor's concentration
  */
 void OGR_SensorGas_Backend::update_pre_arm_check()
 {/*
@@ -73,14 +73,14 @@ void OGR_SensorGas_Backend::update_pre_arm_check()
         return;
     }
 
-    // update min, max captured temperatures
-    state.pre_arm_temperature_min = MIN(state.temperature, state.pre_arm_temperature_min);
-    state.pre_arm_temperature_max = MAX(state.temperature, state.pre_arm_temperature_max);
+    // update min, max captured concentrations
+    state.pre_arm_concentration_min = MIN(state.concentration, state.pre_arm_concentration_min);
+    state.pre_arm_concentration_max = MAX(state.concentration, state.pre_arm_concentration_max);
 
     // Check that the range finder has been exercised through a realistic range of movement
     if (
-         (state.pre_arm_temperature_max < OGR_SENSORTEMPMOTOR_PREARM_ALT_MAX_TEMP) &&
-         (state.pre_arm_temperature_min > OGR_SENSORTEMPMOTOR_PREARM_ALT_MIN_TEMP)
+         (state.pre_arm_concentration_max < OGR_SENSORTEMPMOTOR_PREARM_ALT_MAX_TEMP) &&
+         (state.pre_arm_concentration_min > OGR_SENSORTEMPMOTOR_PREARM_ALT_MIN_TEMP)
          ) {
         state.pre_arm_check = true;
     }
