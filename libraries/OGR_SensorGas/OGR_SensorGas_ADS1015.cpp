@@ -77,37 +77,48 @@ bool OGR_SensorGas_ADS1015::get_reading(void)
         return ret;
     }
 
-	for (uint8_t i=0; i<OGR_SENSORGAS_USE_CH; i++) {
-		if (state.ch[i] > 0) {
+    uint8_t i=0;
+	if (state.ch[i] > 0) {
+		if (get_ADS1015(state.ch[i]-1, val)) {
 			if (get_ADS1015(state.ch[i]-1, val)) {
-				if (get_ADS1015(state.ch[i]-1, val)) {
-					ival = convert(val);
-//        volt = (float)ival*2.048/2048; // convert to voltage
-					state.voltage[i] = (float)ival*0.001; // convert to voltage
-//        temp = ((volt*1000) - 1705)/-8.2; // convert to celsius value
-					state.temperature[i] = ((float)ival - 1705)/-8.2; // convert to celsius value
-//        temp = 0.0005*(temp^2) - 0.0299*temp - 1.3426; // correct celsius value
-					ret = true;
-					// Wait for the next conversion
-//					hal.scheduler->delay(1);
+				ival = convert(val);
+				state.voltage[i] = (float)ival*0.002; // convert to voltage
+                //
+                //
+                //combustibility gas
+				state.temperature[i] = ((float)ival - 1705)/-8.2; // convert to celsius value
+				ret = true;
+				// Wait for the next conversion
+			}
+		}
+	}
+    
+    i=1;
+    if (state.ch[i] > 0) {
+		if (get_ADS1015(state.ch[i]-1, val)) {
+			if (get_ADS1015(state.ch[i]-1, val)) {
+				ival = convert(val);
+				state.voltage[i] = (float)ival*0.002; // convert to voltage
+                //
+                //
+                //H2S gas
+				state.temperature[i] = ((float)ival - 1705)/-8.2; // convert to celsius value
+				ret = true;
+				// Wait for the next conversion
+			}
+		}
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-				}
+    i=2;
+    if (state.ch[i] > 0) {
+		if (get_ADS1015(state.ch[i]-1, val)) {
+			if (get_ADS1015(state.ch[i]-1, val)) {
+	    		ival = convert(val);
+				state.voltage[i] = (float)ival*0.002; // convert to voltage
+                //CO gans
+				state.temperature[i] = ((float)ival - 2)/-0.0025; // convert to celsius value
+				ret = true;
+				// Wait for the next conversion
 			}
 		}
 	}
