@@ -18,7 +18,7 @@
 
 #include <AP_HAL/AP_HAL.h>
 #include <AP_HAL/utility/sparse-endian.h>
-
+#include <unistd.h> //gas
 extern const AP_HAL::HAL& hal;
 
 /*
@@ -73,6 +73,29 @@ bool OGR_SensorGas_ADS1015::get_reading(void)
     int ival;
 	bool ret=false;
 
+    //tgs2602 Ro,Rl,Vout,Vc set
+    //float Ro = 99.9;       //Ro test
+    //float Rl = 47000.0;    //Rl 47K ohm
+    //float Vout = 0.0;
+    //float Vc = 5.0;
+    //float Rs = 0.0;
+
+    //float Ro_init = 10000;  //10k ohm
+    /*
+    float H2S_Curve[2] = {0.05566582614,-2.954075758}; //TGS2602     (0.8,0.1) (0.4,1) (0.25,3)
+    float SmokeCurve[2]   =  {3426.376355, -2.225037973};  //MQ2 smoke
+
+    float Ro = 0.0;//2.511;       //TGS2602 0.05 this has to be tuned 10K Ohm
+    float Rl_tg = 0.893;             //TGmq136S2602 Gas Sensor V1.3 auto-ctrl.com
+    float Rl_mq2 = 2.897;    //MQ2     Elecfreacks Octopus 
+    float val_sens = 0;          // variable to store the value coming from the sensor
+    int data_count = 50;
+    int i_num = 0;
+    double ans = 0;    //sens data
+    long data = 0;  //data calculation
+    float Rs = 0.0;
+    */
+
     if (state.address == 0) {
         return ret;
     }
@@ -81,14 +104,44 @@ bool OGR_SensorGas_ADS1015::get_reading(void)
 	if (state.ch[i] > 0) {
 		if (get_ADS1015(state.ch[i]-1, val)) {
 			if (get_ADS1015(state.ch[i]-1, val)) {
-<<<<<<< HEAD
 				ival = convert(val);
 				state.voltage[i] = (float)ival*0.002; // convert to voltage
-                //
-                //
                 //combustibility gas
-				state.temperature[i] = ((float)ival - 1705)/-8.2; // convert to celsius value
-				ret = true;
+                //set Ro
+            /*    for (i_num = 0 ; i < data_count ; i_num++){
+                    get_ADS1015(state.ch[i]-1, val);
+                    ival = convert(val);
+                    ival = ival * 0.002;
+                    data = (ival - 0) * (1023 - 0) / (5 - 0) + 0;   //0-5 -> 0-1023
+                    val_sens += (long)((long)(1024*1000*(long)Rl_mq2)/data-(long)Rl_mq2);
+                    usleep(600000);
+                }
+                Ro = (float)((long)val_sens*exp(((float)(log(SmokeCurve[0]/10))/SmokeCurve[1])));
+				
+                //set Rs
+                for (i_num = 0 ; i < data_count ; i_num++){
+                    get_ADS1015(state.ch[i]-1, val);
+                    ival = convert(val);
+                    ival = ival * 0.002;
+                    data = (ival - 0) * (1023 - 0) / (5 - 0) + 0;   //0-5 -> 0-1023
+                    val_sens += (long)((long)(1024*1000*(long)Rl_mq2)/data-(long)Rl_mq2);
+                    usleep(600000);
+                }
+                Rs = data / data_count;
+                
+                //<3.5 smoke true  >3.5 smoke false
+                if((Rs/Ro) < 3.5){
+                    ans = 999;
+                }else{
+                    ans = 0;
+                }
+                
+                state.concentration[i] = ans;
+            */
+                //combustibility gas
+				state.concentration[i] = ((float)ival - 1705)/-8.2; // convert to celsius value
+                state.concentration[i] =111;              
+                ret = true;
 				// Wait for the next conversion
 			}
 		}
@@ -100,43 +153,40 @@ bool OGR_SensorGas_ADS1015::get_reading(void)
 			if (get_ADS1015(state.ch[i]-1, val)) {
 				ival = convert(val);
 				state.voltage[i] = (float)ival*0.002; // convert to voltage
-                //
-                //
                 //H2S gas
-				state.temperature[i] = ((float)ival - 1705)/-8.2; // convert to celsius value
+                //set Ro
+            /*    for (i_num = 0 ; i < data_count ; i_num++){
+                    get_ADS1015(state.ch[i]-1, val);
+                    ival = convert(val);
+                    ival = ival * 0.002;
+                    data = (ival - 0) * (1023 - 0) / (5 - 0) + 0;   //0-5 -> 0-1023
+                    val_sens += (long)((long)(1024*1000*(long)Rl_tg)/data-(long)Rl_tg);
+                    usleep(600000);
+                }
+                Ro = (float)((long)val_sens*exp(((float)(log(H2S_Curve[0]/1))/H2S_Curve[1])));
+
+                //set Rs
+                for (i_num = 0 ; i < data_count ; i_num++){
+                    get_ADS1015(state.ch[i]-1, val);
+                    ival = convert(val);
+                    ival = ival * 0.002;
+                    data = (ival - 0) * (1023 - 0) / (5 - 0) + 0;   //0-5 -> 0-1023
+                    val_sens += (long)((long)(1024*1000*(long)Rl_tg)/data-(long)Rl_tg);
+                    usleep(600000);
+                }
+                Rs = data / data_count;
+
+                //set ans
+                ans = (double)(H2S_Curve[0] * (float)pow((Rs/Ro),H2S_Curve[1]));
+                state.concentration[i] = ans;
+            */
+				state.concentration[i] = ((float)ival - 1705)/-8.2; // convert to celsius value
+                state.concentration[i] =333;
 				ret = true;
 				// Wait for the next conversion
 			}
 		}
 	}
-=======
-				if (get_ADS1015(state.ch[i]-1, val)) {
-					ival = convert(val);
-//        volt = (float)ival*2.048/2048; // convert to voltage
-					state.voltage[i] = (float)ival*0.001; // convert to voltage
-//        temp = ((volt*1000) - 1705)/-8.2; // convert to celsius value
-					state.concentration[i] = ((float)ival - 1705)/-8.2; // convert to celsius value
-//        temp = 0.0005*(temp^2) - 0.0299*temp - 1.3426; // correct celsius value
-					ret = true;
-					// Wait for the next conversion
-//					hal.scheduler->delay(1);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
->>>>>>> 119f1c675b8a9d44c09569df40a03a35675335c8
 
     i=2;
     if (state.ch[i] > 0) {
@@ -145,7 +195,9 @@ bool OGR_SensorGas_ADS1015::get_reading(void)
 	    		ival = convert(val);
 				state.voltage[i] = (float)ival*0.002; // convert to voltage
                 //CO gans
-				state.temperature[i] = ((float)ival - 2)/-0.0025; // convert to celsius value
+				state.concentration[i] = ((float)ival - 2)/-0.0025; // convert to celsius value
+                //↑定義元確認
+                state.concentration[i] =999;
 				ret = true;
 				// Wait for the next conversion
 			}
