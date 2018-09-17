@@ -1,6 +1,9 @@
 #include "Rover.h"
 
 #include <AP_RangeFinder/RangeFinder_Backend.h>
+#include <OGR_SensorTemp/OGR_SensorTemp_Backend.h>
+#include <OGR_SensorTempMotor/OGR_SensorTempMotor_Backend.h>
+#include <OGR_SensorGas/OGR_SensorGas_Backend.h>
 
 #if LOGGING_ENABLED == ENABLED
 
@@ -304,6 +307,68 @@ void Rover::Log_Write_Proximity()
     DataFlash.Log_Write_Proximity(g2.proximity);
 }
 
+struct PACKED log_OGR {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float    temp_inner;
+    float    temp_outer;
+    float    temp_motor1;
+    float    temp_motor2;
+    float    temp_motor3;
+    float    temp_motor4;
+    float    concent_gas_1;
+    float    concent_gas_2;
+    float    concent_gas_3;
+};
+
+// Write a ogr packet
+void Rover::Log_Write_OGR()
+{
+    uint8_t i;
+    float temp[OGR_SENSORTEMP_MAX_INSTANCES];
+
+    for (i=0; i<OGR_SENSORTEMP_MAX_INSTANCES; i++) {
+        OGR_SensorTemp_Backend *s = ogr_sensor_temp.get_backend(i);
+        temp[i] = 0.0;
+        if (s != nullptr) {
+            temp[i] = s->temperature();
+        }
+    }
+
+    float temp_motor[4];
+
+    OGR_SensorTempMotor_Backend *s1 = ogr_sensor_temp_motor.get_backend(0);
+    if (s1 != nullptr) {
+		for (i=0; i<OGR_SENSORTEMPMOTOR_USE_CH; i++) {
+			temp_motor[i] = s1->state.temperature[i];
+        }
+    }
+
+    float concent[3];
+
+    OGR_SensorGas_Backend *s2 = ogr_sensor_gas.get_backend(0);
+    if (s2 != nullptr) {
+		for (i=0; i<OGR_SENSORGAS_USE_CH; i++) {
+			concent[i] = s2->state.concentration[i];
+        }
+    }
+
+    struct log_OGR pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_OGR_MSG),
+        time_us         : AP_HAL::micros64(),
+        temp_inner      : temp[0],
+        temp_outer      : temp[1],
+        temp_motor1     : temp_motor[0],
+        temp_motor2     : temp_motor[1],
+        temp_motor3     : temp_motor[2],
+        temp_motor4     : temp_motor[3],
+        concent_gas_1   : concent[0],
+        concent_gas_2   : concent[1],
+        concent_gas_3   : concent[2]
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 // type and unit information can be found in
 // libraries/DataFlash/Logstructure.h; search for "log_Units" for
 // units and "Format characters" for field type information
@@ -327,6 +392,8 @@ const LogStructure Rover::log_structure[] = {
       "ERR",   "QBB",         "TimeUS,Subsys,ECode", "s--", "F--" },
     { LOG_WHEELENCODER_MSG, sizeof(log_WheelEncoder),
       "WENC",  "Qfbffbf", "TimeUS,Dist0,Qual0,RPM0,Dist1,Qual1,RPM1", "sm-qm-q", "F0--0--" },
+    { LOG_OGR_MSG, sizeof(log_OGR),
+      "OGRS", "Qfffffffff", "TimeUS,TempI,TempO,TempM1,TempM2,TempM3,TempM4,Gas1,Gas2,Gas3", "sOOOOOOuuu", "F000000000" },
 };
 
 void Rover::log_init(void)
@@ -361,5 +428,6 @@ void Rover::Log_Write_Error(uint8_t sub_system, uint8_t error_code) {}
 void Rover::Log_Write_Steering() {}
 void Rover::Log_Write_WheelEncoder() {}
 void Rover::Log_Write_Proximity() {}
+void Rover::Log_Write_OGR() {}
 
 #endif  // LOGGING_ENABLED

@@ -402,6 +402,7 @@ private:
     void update_compass(void);
     void update_logging1(void);
     void update_logging2(void);
+    void update_ogr_logging(void);
     void update_aux(void);
     void one_second_loop(void);
     void update_GPS_50Hz(void);
@@ -516,6 +517,7 @@ private:
     void Log_Read(uint16_t log_num, uint16_t start_page, uint16_t end_page);
     void log_init(void);
     void Log_Write_Vehicle_Startup_Messages();
+    void Log_Write_OGR();
 
     // Parameters.cpp
     void load_parameters(void);

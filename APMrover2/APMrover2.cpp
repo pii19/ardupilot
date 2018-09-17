@@ -60,6 +60,7 @@ const AP_Scheduler::Task Rover::scheduler_tasks[] = {
     SCHED_TASK(update_mission,         10,   1000),
     SCHED_TASK(update_logging1,        10,   1000),
     SCHED_TASK(update_logging2,        10,   1000),
+    SCHED_TASK(update_ogr_logging,     10,   1000),
     SCHED_TASK(gcs_retry_deferred,     50,   1000),
     SCHED_TASK(gcs_update,             50,   1700),
     SCHED_TASK(gcs_data_stream_send,   50,   3000),
@@ -243,6 +244,13 @@ void Rover::update_logging2(void)
     }
 }
 
+/*
+  log ogura custom sensor data - 10Hz
+ */
+void Rover::update_ogr_logging(void)
+{
+    Log_Write_OGR();
+}
 
 /*
   update aux servo mappings
