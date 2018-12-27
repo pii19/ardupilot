@@ -16,17 +16,17 @@
 
 #include <AP_Common/AP_Common.h>
 #include <AP_HAL/AP_HAL.h>
-#include "WJF_SensorADC.h"
+#include "WJF_SensorSoil.h"
 
-class WJF_SensorADC_Backend
+class WJF_SensorSoil_Backend
 {
 public:
     // constructor. This incorporates initialisation as well.
-	WJF_SensorADC_Backend(WJF_SensorADC::WJF_SensorADC_State &_state);
+	WJF_SensorSoil_Backend(WJF_SensorSoil::WJF_SensorSoil_State &_state);
 
-    // we declare a virtual destructor so that WJF_SensorADC drivers can
+    // we declare a virtual destructor so that WJF_SensorSoil drivers can
     // override with a custom destructor if need be
-    virtual ~WJF_SensorADC_Backend(void) {}
+    virtual ~WJF_SensorSoil_Backend(void) {}
 
     // update the state structure
     virtual void update() = 0;
@@ -34,31 +34,30 @@ public:
     void update_pre_arm_check();
 
     uint8_t instance() const { return state.instance; }
-/*
     float temperature() const { return state.temperature; }
-    float voltage() const { return state.voltage; }
+    float ph() const { return state.ph; }
+    float ec() const { return state.ec; }
+    float ec_phase() const { return state.ec_phase; }
     float min_temperature() const { return state.min_temperature; }
     float max_temperature() const { return state.max_temperature; }
-*/
-    WJF_SensorADC::WJF_SensorADC_Status status() const {
-        if (state.type == WJF_SensorADC::WJF_SensorADC_TYPE_NONE) {
+    WJF_SensorSoil::WJF_SensorSoil_Status status() const {
+        if (state.type == WJF_SensorSoil::WJF_SensorSoil_TYPE_NONE) {
             // turned off at runtime?
-            return WJF_SensorADC::WJF_SensorADC_NotConnected;
+            return WJF_SensorSoil::WJF_SensorSoil_NotConnected;
         }
         return state.status;
     }
-    WJF_SensorADC::WJF_SensorADC_Type type() const { return (WJF_SensorADC::WJF_SensorADC_Type)state.type.get(); }
+    WJF_SensorSoil::WJF_SensorSoil_Type type() const { return (WJF_SensorSoil::WJF_SensorSoil_Type)state.type.get(); }
 
     // true if sensor is returning data
     bool has_data() const {
-        return ((state.status != WJF_SensorADC::WJF_SensorADC_NotConnected) &&
-                (state.status != WJF_SensorADC::WJF_SensorADC_NoData));
+        return ((state.status != WJF_SensorSoil::WJF_SensorSoil_NotConnected) &&
+                (state.status != WJF_SensorSoil::WJF_SensorSoil_NoData));
     }
 
     // returns count of consecutive good readings
     uint8_t valid_count() const { return state.valid_count; }
 
-    WJF_SensorADC::WJF_SensorADC_State &state;
 
 protected:
 
@@ -66,7 +65,9 @@ protected:
     void update_status();
 
     // set status and update valid_count
-    void set_status(WJF_SensorADC::WJF_SensorADC_Status status);
+    void set_status(WJF_SensorSoil::WJF_SensorSoil_Status status);
+
+    WJF_SensorSoil::WJF_SensorSoil_State &state;
 
     // semaphore for access to shared frontend data
     AP_HAL::Semaphore *_sem;    

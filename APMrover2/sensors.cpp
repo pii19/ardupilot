@@ -55,11 +55,11 @@ void Rover::init_rangefinder(void)
     rangefinder.init();
 }
 
-void Rover::init_ogr_sensors(void)
+void Rover::init_wjf_sensors(void)
 {
-    ogr_sensor_temp.init();
-    ogr_sensor_temp_motor.init();
-    ogr_sensor_gas.init();
+    wjf_sensor_temphumi.init();
+    wjf_sensor_adc.init();
+    wjf_sensor_soil.init();
 }
 
 // init beacons used for non-gps position estimates
@@ -259,6 +259,12 @@ void Rover::read_rangefinders(void)
         obstacle.detected_count = 0;
         obstacle.turn_angle = 0;
     }
+}
+
+// read the W-JFoP Soil sensor
+void Rover::read_wjf_sensorsoil(void)
+{
+    wjf_sensor_soil.update();
 }
 
 // initialise proximity sensor

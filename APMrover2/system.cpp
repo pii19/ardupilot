@@ -101,8 +101,8 @@ void Rover::init_ardupilot()
     // init visual odometry
     init_visual_odom();
 
-    // initialise ogr sensors
-    init_ogr_sensors();
+    // initialise wjf sensors
+    init_wjf_sensors();
 
     // and baro for EKF
     init_barometer(true);

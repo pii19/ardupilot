@@ -20,54 +20,53 @@
 #include <AP_Math/AP_Math.h>
 
 // Maximum number of temperature sensor instances available on this platform
-#define WJF_SENSORADC_MAX_INSTANCES           1
-#define WJF_SENSORADC_PREARM_ALT_MAX_VOLT     5.0
-#define WJF_SENSORADC_PREARM_ALT_MIN_VOLT     0.0
-#define WJF_SENSORADC_USE_CH                  4
+#define WJF_SENSORTEMPHUMI_MAX_INSTANCES 1
+#define WJF_SENSORTEMPHUMI_PREARM_ALT_MAX_TEMP           125.0
+#define WJF_SENSORTEMPHUMI_PREARM_ALT_MIN_TEMP           -40.0
 
-class WJF_SensorADC_Backend;
+class WJF_SensorTempHumi_Backend;
 
-class WJF_SensorADC
+class WJF_SensorTempHumi
 {
-    friend class WJF_SensorADC_Backend;
+    friend class WJF_SensorTempHumi_Backend;
 
 public:
-    WJF_SensorADC(void);
+    WJF_SensorTempHumi(void);
 
     /* Do not allow copies */
-    WJF_SensorADC(const WJF_SensorADC &other) = delete;
-    WJF_SensorADC &operator=(const WJF_SensorADC&) = delete;
+    WJF_SensorTempHumi(const WJF_SensorTempHumi &other) = delete;
+    WJF_SensorTempHumi &operator=(const WJF_SensorTempHumi&) = delete;
 
     // sensor driver types
-    enum WJF_SensorADC_Type {
-        WJF_SensorADC_TYPE_NONE    = 0,
-        WJF_SensorADC_TYPE_ADS1015 = 1
+    enum WJF_SensorTempHumi_Type {
+        WJF_SensorTempHumi_TYPE_NONE    = 0,
+        WJF_SensorTempHumi_TYPE_SHT31D = 1,
     };
 
-    enum WJF_SensorADC_Status {
-        WJF_SensorADC_NotConnected = 0,
-        WJF_SensorADC_NoData,
-        WJF_SensorADC_OutOfRangeLow,
-        WJF_SensorADC_OutOfRangeHigh,
-        WJF_SensorADC_Good
+    enum WJF_SensorTempHumi_Status {
+        WJF_SensorTempHumi_NotConnected = 0,
+        WJF_SensorTempHumi_NoData,
+        WJF_SensorTempHumi_OutOfRangeLow,
+        WJF_SensorTempHumi_OutOfRangeHigh,
+        WJF_SensorTempHumi_Good
     };
 
-    // The WJF_SensorADC_State structure is filled in by the backend driver
-    struct WJF_SensorADC_State {
-        uint8_t                instance;    // the instance number of this WJF_SensorADC
-        float                  voltage[WJF_SENSORADC_USE_CH];  // voltage
-
-        enum WJF_SensorADC_Status status;     // sensor status
+    // The WJF_SensorTempHumi_State structure is filled in by the backend driver
+    struct WJF_SensorTempHumi_State {
+        uint8_t                instance;    // the instance number of this WJF_SensorTempHumi
+        float                  temperature; // temperature: in celsius
+        float                  humidity; // humidity
+                                            // if applicable, otherwise 0
+        enum WJF_SensorTempHumi_Status status;     // sensor status
         uint8_t                valid_count;   // number of consecutive valid readings (maxes out at 10)
         bool                   pre_arm_check;   // true if sensor has passed pre-arm checks
-        float                  pre_arm_voltage_min;    // min temperature captured during pre-arm checks
-        float                  pre_arm_voltage_max;    // max temperature captured during pre-arm checks
+        float                  pre_arm_temperature_min;    // min temperature captured during pre-arm checks
+        float                  pre_arm_temperature_max;    // max temperature captured during pre-arm checks
 
         AP_Int8  type;
+        AP_Float min_temperature;
+        AP_Float max_temperature;
         AP_Int8  address;
-        AP_Float min_voltage[WJF_SENSORADC_USE_CH];
-        AP_Float max_voltage[WJF_SENSORADC_USE_CH];
-        AP_Int8  ch[WJF_SENSORADC_USE_CH]; //using ADC channel number
     };
 
     // parameters for each instance
@@ -85,7 +84,7 @@ public:
     // 10Hz from main loop
     void update(void);
 
-    WJF_SensorADC_Backend *get_backend(uint8_t id) const;
+    WJF_SensorTempHumi_Backend *get_backend(uint8_t id) const;
 
     /*
       returns true if pre-arm checks have passed for all temperature sensors
@@ -96,12 +95,12 @@ public:
 
 
 private:
-    WJF_SensorADC_State state[WJF_SENSORADC_MAX_INSTANCES];
-    WJF_SensorADC_Backend *drivers[WJF_SENSORADC_MAX_INSTANCES];
+    WJF_SensorTempHumi_State state[WJF_SENSORTEMPHUMI_MAX_INSTANCES];
+    WJF_SensorTempHumi_Backend *drivers[WJF_SENSORTEMPHUMI_MAX_INSTANCES];
     uint8_t num_instances:1;
 
     void detect_instance(uint8_t instance);
     void update_instance(uint8_t instance);  
 
-    bool _add_backend(WJF_SensorADC_Backend *driver);
+    bool _add_backend(WJF_SensorTempHumi_Backend *driver);
 };

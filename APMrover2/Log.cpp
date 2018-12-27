@@ -1,9 +1,9 @@
 #include "Rover.h"
 
 #include <AP_RangeFinder/RangeFinder_Backend.h>
-#include <OGR_SensorTemp/OGR_SensorTemp_Backend.h>
-#include <OGR_SensorTempMotor/OGR_SensorTempMotor_Backend.h>
-#include <OGR_SensorGas/OGR_SensorGas_Backend.h>
+#include <WJF_SensorTempHumi/WJF_SensorTempHumi_Backend.h>
+#include <WJF_SensorADC/WJF_SensorADC_Backend.h>
+#include <WJF_SensorSoil/WJF_SensorSoil_Backend.h>
 
 #if LOGGING_ENABLED == ENABLED
 
@@ -307,64 +307,69 @@ void Rover::Log_Write_Proximity()
     DataFlash.Log_Write_Proximity(g2.proximity);
 }
 
-struct PACKED log_OGR {
+struct PACKED log_WJF {
     LOG_PACKET_HEADER;
     uint64_t time_us;
-    float    temp_inner;
-    float    temp_outer;
-    float    temp_motor1;
-    float    temp_motor2;
-    float    temp_motor3;
-    float    temp_motor4;
-    float    concent_gas_1;
-    float    concent_gas_2;
-    float    concent_gas_3;
+    float    temp;
+    float    humi;
+    float    adc_volt1;
+    float    adc_volt2;
+    float    adc_volt3;
+    float    adc_volt4;
+    float    soil_temp;
+    float    soil_ph;
+    float    soil_ec;
+    float    soil_ec_phase;
 };
 
-// Write a ogr packet
-void Rover::Log_Write_OGR()
+// Write a wjf packet
+void Rover::Log_Write_WJF()
 {
-    uint8_t i;
-    float temp[OGR_SENSORTEMP_MAX_INSTANCES];
+    float temp=0;
+    float humi=0;
 
-    for (i=0; i<OGR_SENSORTEMP_MAX_INSTANCES; i++) {
-        OGR_SensorTemp_Backend *s = ogr_sensor_temp.get_backend(i);
-        temp[i] = 0.0;
-        if (s != nullptr) {
-            temp[i] = s->temperature();
-        }
+    WJF_SensorTempHumi_Backend *s = wjf_sensor_temphumi.get_backend(0);
+    if (s != nullptr) {
+        temp = s->temperature();
+        humi = s->humidity();
     }
 
-    float temp_motor[4];
+     float volt[4];
 
-    OGR_SensorTempMotor_Backend *s1 = ogr_sensor_temp_motor.get_backend(0);
+    WJF_SensorADC_Backend *s1 = wjf_sensor_adc.get_backend(0);
     if (s1 != nullptr) {
-		for (i=0; i<OGR_SENSORTEMPMOTOR_USE_CH; i++) {
-			temp_motor[i] = s1->state.temperature[i];
+		for (uint8_t i=0; i<WJF_SENSORADC_USE_CH; i++) {
+			volt[i] = s1->state.voltage[i];
         }
     }
 
-    float concent[3];
+    float soil_temp=0;
+    float soil_ph=0;
+    float soil_ec=0;
+    float soil_ec_phase=0;
 
-    OGR_SensorGas_Backend *s2 = ogr_sensor_gas.get_backend(0);
+    WJF_SensorSoil_Backend *s2 = wjf_sensor_soil.get_backend(0);
     if (s2 != nullptr) {
-		for (i=0; i<OGR_SENSORGAS_USE_CH; i++) {
-			concent[i] = s2->state.concentration[i];
-        }
+        soil_temp = s2->temperature();
+        soil_ph = s2->ph();
+        soil_ec = s2->ec();
+        soil_ec_phase = s2->ec_phase();
     }
 
-    struct log_OGR pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_OGR_MSG),
-        time_us         : AP_HAL::micros64(),
-        temp_inner      : temp[0],
-        temp_outer      : temp[1],
-        temp_motor1     : temp_motor[0],
-        temp_motor2     : temp_motor[1],
-        temp_motor3     : temp_motor[2],
-        temp_motor4     : temp_motor[3],
-        concent_gas_1   : concent[0],
-        concent_gas_2   : concent[1],
-        concent_gas_3   : concent[2]
+
+    struct log_WJF pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_WJF_MSG),
+        time_us       : AP_HAL::micros64(),
+        temp          : temp,
+        humi          : humi,
+        adc_volt1     : volt[0],
+        adc_volt2     : volt[1],
+        adc_volt3     : volt[2],
+        adc_volt4     : volt[3],
+        soil_temp     : soil_temp,
+        soil_ph       : soil_ph,
+        soil_ec       : soil_ec,
+        soil_ec_phase : soil_ec_phase
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -392,8 +397,8 @@ const LogStructure Rover::log_structure[] = {
       "ERR",   "QBB",         "TimeUS,Subsys,ECode", "s--", "F--" },
     { LOG_WHEELENCODER_MSG, sizeof(log_WheelEncoder),
       "WENC",  "Qfbffbf", "TimeUS,Dist0,Qual0,RPM0,Dist1,Qual1,RPM1", "sm-qm-q", "F0--0--" },
-    { LOG_OGR_MSG, sizeof(log_OGR),
-      "OGRS", "Qfffffffff", "TimeUS,TempI,TempO,TempM1,TempM2,TempM3,TempM4,Gas1,Gas2,Gas3", "sOOOOOOuuu", "F000000000" },
+    { LOG_WJF_MSG, sizeof(log_WJF),
+      "WJFS", "Qffffffffff", "TimeUS,Temp,Humi,ADC1,ADC2,ADC3,ADC4,STemp,SpH,SEc,SEcP", "sOOOOOO0000", "F0000000000" },
 };
 
 void Rover::log_init(void)
@@ -428,6 +433,6 @@ void Rover::Log_Write_Error(uint8_t sub_system, uint8_t error_code) {}
 void Rover::Log_Write_Steering() {}
 void Rover::Log_Write_WheelEncoder() {}
 void Rover::Log_Write_Proximity() {}
-void Rover::Log_Write_OGR() {}
+void Rover::Log_Write_WJF() {}
 
 #endif  // LOGGING_ENABLED

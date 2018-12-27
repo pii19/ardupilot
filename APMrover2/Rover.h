@@ -79,9 +79,9 @@
 #include <AC_Fence/AC_Fence.h>
 #include <AP_Proximity/AP_Proximity.h>
 #include <AC_Avoidance/AC_Avoid.h>
-#include <OGR_SensorTemp/OGR_SensorTemp.h>
-#include <OGR_SensorTempMotor/OGR_SensorTempMotor.h>
-#include <OGR_SensorGas/OGR_SensorGas.h>
+#include <WJF_SensorTempHumi/WJF_SensorTempHumi.h>
+#include <WJF_SensorADC/WJF_SensorADC.h>
+#include <WJF_SensorSoil/WJF_SensorSoil.h>
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
 #include <SITL/SITL.h>
 #endif
@@ -167,10 +167,10 @@ private:
     RangeFinder rangefinder{serial_manager, ROTATION_NONE};
     AP_Button button;
 
-    // OGR custom sensor drivers
-    OGR_SensorTemp ogr_sensor_temp;
-    OGR_SensorTempMotor ogr_sensor_temp_motor;
-    OGR_SensorGas ogr_sensor_gas;
+    // WJF custom sensor drivers
+    WJF_SensorTempHumi wjf_sensor_temphumi;
+    WJF_SensorADC wjf_sensor_adc;
+    WJF_SensorSoil wjf_sensor_soil{serial_manager};
 
     // flight modes convenience array
     AP_Int8 *modes;
@@ -402,7 +402,7 @@ private:
     void update_compass(void);
     void update_logging1(void);
     void update_logging2(void);
-    void update_ogr_logging(void);
+    void update_wjf_logging(void);
     void update_aux(void);
     void one_second_loop(void);
     void update_GPS_50Hz(void);
@@ -490,9 +490,9 @@ private:
     void send_pid_tuning(mavlink_channel_t chan);
     void send_wheel_encoder(mavlink_channel_t chan);
     void send_fence_status(mavlink_channel_t chan);
-    void send_ogr_sensor_temp(mavlink_channel_t chan);
-    void send_ogr_sensor_temp_motor(mavlink_channel_t chan);
-    void send_ogr_sensor_gas(mavlink_channel_t chan);
+    void send_wjf_sensor_temphumi(mavlink_channel_t chan);
+    void send_wjf_sensor_adc(mavlink_channel_t chan);
+    void send_wjf_sensor_soil(mavlink_channel_t chan);
     void gcs_data_stream_send(void);
     void gcs_update(void);
     void gcs_retry_deferred(void);
@@ -517,7 +517,7 @@ private:
     void Log_Read(uint16_t log_num, uint16_t start_page, uint16_t end_page);
     void log_init(void);
     void Log_Write_Vehicle_Startup_Messages();
-    void Log_Write_OGR();
+    void Log_Write_WJF();
 
     // Parameters.cpp
     void load_parameters(void);
@@ -537,7 +537,7 @@ private:
     void compass_accumulate(void);
     void init_barometer(bool full_calibration);
     void init_rangefinder(void);
-    void init_ogr_sensors(void);
+    void init_wjf_sensors(void);
     void init_beacon();
     void init_visual_odom();
     void update_visual_odom();
@@ -546,6 +546,7 @@ private:
     void compass_cal_update(void);
     void accel_cal_update(void);
     void read_rangefinders(void);
+    void read_wjf_sensorsoil(void);
     void init_proximity();
     void update_sensor_status_flags(void);
 

@@ -47,6 +47,7 @@ const AP_Scheduler::Task Rover::scheduler_tasks[] = {
     SCHED_TASK(read_radio,             50,   1000),
     SCHED_TASK(ahrs_update,            50,   6400),
     SCHED_TASK(read_rangefinders,      50,   2000),
+    SCHED_TASK(read_wjf_sensorsoil,    1,    10000),
     SCHED_TASK(update_current_mode,    50,   1500),
     SCHED_TASK(set_servos,             50,   1500),
     SCHED_TASK(update_GPS_50Hz,        50,   2500),
@@ -60,7 +61,7 @@ const AP_Scheduler::Task Rover::scheduler_tasks[] = {
     SCHED_TASK(update_mission,         10,   1000),
     SCHED_TASK(update_logging1,        10,   1000),
     SCHED_TASK(update_logging2,        10,   1000),
-    SCHED_TASK(update_ogr_logging,     10,   1000),
+    SCHED_TASK(update_wjf_logging,     10,   1000),
     SCHED_TASK(gcs_retry_deferred,     50,   1000),
     SCHED_TASK(gcs_update,             50,   1700),
     SCHED_TASK(gcs_data_stream_send,   50,   3000),
@@ -245,11 +246,11 @@ void Rover::update_logging2(void)
 }
 
 /*
-  log ogura custom sensor data - 10Hz
+  log W-JFop custom sensor data - 10Hz
  */
-void Rover::update_ogr_logging(void)
+void Rover::update_wjf_logging(void)
 {
-    Log_Write_OGR();
+    Log_Write_WJF();
 }
 
 /*

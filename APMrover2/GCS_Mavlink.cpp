@@ -3,9 +3,9 @@
 #include "GCS_Mavlink.h"
 
 #include <AP_RangeFinder/RangeFinder_Backend.h>
-#include <OGR_SensorTemp/OGR_SensorTemp_Backend.h>
-#include <OGR_SensorTempMotor/OGR_SensorTempMotor_Backend.h>
-#include <OGR_SensorGas/OGR_SensorGas_Backend.h>
+#include <WJF_SensorTempHumi/WJF_SensorTempHumi_Backend.h>
+#include <WJF_SensorADC/WJF_SensorADC_Backend.h>
+#include <WJF_SensorSoil/WJF_SensorSoil_Backend.h>
 
 void Rover::send_heartbeat(mavlink_channel_t chan)
 {
@@ -261,71 +261,65 @@ void Rover::send_wheel_encoder(mavlink_channel_t chan)
     }
 }
 
-void Rover::send_ogr_sensor_temp(mavlink_channel_t chan)
+void Rover::send_wjf_sensor_temphumi(mavlink_channel_t chan)
 {
-    float temp[OGR_SENSORTEMP_MAX_INSTANCES];
+    float temp[WJF_SENSORTEMPHUMI_MAX_INSTANCES];
+    float humi[WJF_SENSORTEMPHUMI_MAX_INSTANCES];
 
-    for (uint8_t i=0; i<OGR_SENSORTEMP_MAX_INSTANCES; i++) {
-        OGR_SensorTemp_Backend *s = ogr_sensor_temp.get_backend(i);
+    for (uint8_t i=0; i<WJF_SENSORTEMPHUMI_MAX_INSTANCES; i++) {
+        WJF_SensorTempHumi_Backend *s = wjf_sensor_temphumi.get_backend(i);
         temp[i] = 0.0;
+        humi[i] = 0.0;
         if (s != nullptr) {
             temp[i] = s->temperature();
+            humi[i] = s->humidity();
         }
     }
 
-    mavlink_msg_ogr_sensor_temp_send(
+    mavlink_msg_wjf_sensor_temphumi_send(
         chan,
-        temp[0], temp[1] );
+        temp[0], humi[0] );
 }
 
-void Rover::send_ogr_sensor_temp_motor(mavlink_channel_t chan)
+void Rover::send_wjf_sensor_adc(mavlink_channel_t chan)
 {
-#if true
-    float temp[4];
     float volt[4];
 
-    OGR_SensorTempMotor_Backend *s = ogr_sensor_temp_motor.get_backend(0);
+    WJF_SensorADC_Backend *s = wjf_sensor_adc.get_backend(0);
     if (s != nullptr) {
-		for (uint8_t i=0; i<OGR_SENSORTEMPMOTOR_USE_CH; i++) {
-			temp[i] = s->state.temperature[i];
+		for (uint8_t i=0; i<WJF_SENSORADC_USE_CH; i++) {
 			volt[i] = s->state.voltage[i];
         }
     }
-#else
-    float temp[OGR_SENSORTEMPMOTOR_MAX_INSTANCES];
-    float volt[OGR_SENSORTEMPMOTOR_MAX_INSTANCES];
-
-    for (uint8_t i=0; i<OGR_SENSORTEMPMOTOR_MAX_INSTANCES; i++) {
-        OGR_SensorTempMotor_Backend *s = ogr_sensor_temp_motor.get_backend(i);
-        temp[i] = 0.0;
-        volt[i] = 0.0;
-        if (s != nullptr) {
-            temp[i] = s->temperature();
-            volt[i] = s->voltage();
-        }
-    }
-#endif
-    mavlink_msg_ogr_sensor_temp_motor_send(
+    mavlink_msg_wjf_sensor_adc_send(
         chan,
-        temp[0], volt[0], temp[1], volt[1], temp[2], volt[2], temp[3], volt[3] );
+        volt[0], volt[1], volt[2], volt[3] );
 }
 
-void Rover::send_ogr_sensor_gas(mavlink_channel_t chan)
+void Rover::send_wjf_sensor_soil(mavlink_channel_t chan)
 {
-    float concent[3];
-    float volt[3];
+    float temp[WJF_SENSORSOIL_MAX_INSTANCES];
+    float ph[WJF_SENSORSOIL_MAX_INSTANCES];
+    float ec[WJF_SENSORSOIL_MAX_INSTANCES];
+    float ec_phase[WJF_SENSORSOIL_MAX_INSTANCES];
 
-    OGR_SensorGas_Backend *s = ogr_sensor_gas.get_backend(0);
-    if (s != nullptr) {
-		for (uint8_t i=0; i<OGR_SENSORGAS_USE_CH; i++) {
-			concent[i] = s->state.concentration[i];
-			volt[i] = s->state.voltage[i];
+    for (uint8_t i=0; i<WJF_SENSORSOIL_MAX_INSTANCES; i++) {
+        WJF_SensorSoil_Backend *s = wjf_sensor_soil.get_backend(i);
+        temp[i] = 0.0;
+        ph[i] = 0.0;
+        ec[i] = 0.0;
+        ec_phase[i] = 0.0;
+        if (s != nullptr) {
+            temp[i] = s->temperature();
+            ph[i] = s->ph();
+            ec[i] = s->ec();
+            ec_phase[i] = s->ec_phase();
         }
     }
 
-    mavlink_msg_ogr_sensor_gas_send(
+    mavlink_msg_wjf_sensor_soil_send(
         chan,
-        concent[0], volt[0], concent[1], volt[1], concent[2], volt[2] );
+        temp[0], ph[0], ec[0], ec_phase[0] );
 }
 
 uint8_t GCS_MAVLINK_Rover::sysid_my_gcs() const
@@ -488,19 +482,19 @@ bool GCS_MAVLINK_Rover::try_send_message(enum ap_message id)
         send_battery_status(rover.battery);
         break;
 
-    case MSG_OGR_SENSOR_TEMP:
-        CHECK_PAYLOAD_SIZE(OGR_SENSOR_TEMP);
-        rover.send_ogr_sensor_temp(chan);
+    case MSG_WJF_SENSOR_TEMPHUMI:
+        CHECK_PAYLOAD_SIZE(WJF_SENSOR_TEMPHUMI);
+        rover.send_wjf_sensor_temphumi(chan);
         break;
 
-    case MSG_OGR_SENSOR_TEMP_MOTOR:
-        CHECK_PAYLOAD_SIZE(OGR_SENSOR_TEMP_MOTOR);
-        rover.send_ogr_sensor_temp_motor(chan);
+    case MSG_WJF_SENSOR_ADC:
+        CHECK_PAYLOAD_SIZE(WJF_SENSOR_ADC);
+        rover.send_wjf_sensor_adc(chan);
         break;
 
-    case MSG_OGR_SENSOR_GAS:
-        CHECK_PAYLOAD_SIZE(OGR_SENSOR_GAS);
-        rover.send_ogr_sensor_gas(chan);
+    case MSG_WJF_SENSOR_SOIL:
+        CHECK_PAYLOAD_SIZE(WJF_SENSOR_SOIL);
+        rover.send_wjf_sensor_soil(chan);
         break;
 
     default:
@@ -715,9 +709,9 @@ GCS_MAVLINK_Rover::data_stream_send(void)
         send_message(MSG_EKF_STATUS_REPORT);
         send_message(MSG_VIBRATION);
         send_message(MSG_RPM);
-        send_message(MSG_OGR_SENSOR_TEMP);
-        send_message(MSG_OGR_SENSOR_TEMP_MOTOR);
-        send_message(MSG_OGR_SENSOR_GAS);
+        send_message(MSG_WJF_SENSOR_TEMPHUMI);
+        send_message(MSG_WJF_SENSOR_ADC);
+        send_message(MSG_WJF_SENSOR_SOIL);
     }
 }
 

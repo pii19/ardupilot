@@ -16,17 +16,17 @@
 
 #include <AP_Common/AP_Common.h>
 #include <AP_HAL/AP_HAL.h>
-#include "WJF_SensorADC.h"
+#include "WJF_SensorTempHumi.h"
 
-class WJF_SensorADC_Backend
+class WJF_SensorTempHumi_Backend
 {
 public:
     // constructor. This incorporates initialisation as well.
-	WJF_SensorADC_Backend(WJF_SensorADC::WJF_SensorADC_State &_state);
+	WJF_SensorTempHumi_Backend(WJF_SensorTempHumi::WJF_SensorTempHumi_State &_state);
 
-    // we declare a virtual destructor so that WJF_SensorADC drivers can
+    // we declare a virtual destructor so that WJF_SensorTempHumi drivers can
     // override with a custom destructor if need be
-    virtual ~WJF_SensorADC_Backend(void) {}
+    virtual ~WJF_SensorTempHumi_Backend(void) {}
 
     // update the state structure
     virtual void update() = 0;
@@ -34,31 +34,27 @@ public:
     void update_pre_arm_check();
 
     uint8_t instance() const { return state.instance; }
-/*
     float temperature() const { return state.temperature; }
-    float voltage() const { return state.voltage; }
+    float humidity() const { return state.humidity; }
     float min_temperature() const { return state.min_temperature; }
     float max_temperature() const { return state.max_temperature; }
-*/
-    WJF_SensorADC::WJF_SensorADC_Status status() const {
-        if (state.type == WJF_SensorADC::WJF_SensorADC_TYPE_NONE) {
+    WJF_SensorTempHumi::WJF_SensorTempHumi_Status status() const {
+        if (state.type == WJF_SensorTempHumi::WJF_SensorTempHumi_TYPE_NONE) {
             // turned off at runtime?
-            return WJF_SensorADC::WJF_SensorADC_NotConnected;
+            return WJF_SensorTempHumi::WJF_SensorTempHumi_NotConnected;
         }
         return state.status;
     }
-    WJF_SensorADC::WJF_SensorADC_Type type() const { return (WJF_SensorADC::WJF_SensorADC_Type)state.type.get(); }
+    WJF_SensorTempHumi::WJF_SensorTempHumi_Type type() const { return (WJF_SensorTempHumi::WJF_SensorTempHumi_Type)state.type.get(); }
 
     // true if sensor is returning data
     bool has_data() const {
-        return ((state.status != WJF_SensorADC::WJF_SensorADC_NotConnected) &&
-                (state.status != WJF_SensorADC::WJF_SensorADC_NoData));
+        return ((state.status != WJF_SensorTempHumi::WJF_SensorTempHumi_NotConnected) &&
+                (state.status != WJF_SensorTempHumi::WJF_SensorTempHumi_NoData));
     }
 
     // returns count of consecutive good readings
     uint8_t valid_count() const { return state.valid_count; }
-
-    WJF_SensorADC::WJF_SensorADC_State &state;
 
 protected:
 
@@ -66,8 +62,10 @@ protected:
     void update_status();
 
     // set status and update valid_count
-    void set_status(WJF_SensorADC::WJF_SensorADC_Status status);
+    void set_status(WJF_SensorTempHumi::WJF_SensorTempHumi_Status status);
+
+    WJF_SensorTempHumi::WJF_SensorTempHumi_State &state;
 
     // semaphore for access to shared frontend data
-    AP_HAL::Semaphore *_sem;    
+    AP_HAL::Semaphore *_sem;
 };

@@ -62,7 +62,7 @@ WJF_SensorADC_Backend *WJF_SensorADC_ADS1015::detect(WJF_SensorADC::WJF_SensorAD
 void WJF_SensorADC_ADS1015::init()
 {
     // call timer() at 4Hz
-    _dev->register_periodic_callback(250000,
+    _dev->register_periodic_callback(1000000,
                                      FUNCTOR_BIND_MEMBER(&WJF_SensorADC_ADS1015::timer, void));
 }
 
@@ -128,7 +128,7 @@ bool WJF_SensorADC_ADS1015::get_ADS1015(uint8_t ch, be16_t &val)
                     ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
 
   // Set PGA/voltage range
-  config |= ADS1015_REG_CONFIG_PGA_2_048V;
+  config |= ADS1015_REG_CONFIG_PGA_1_024V;
 
   // Set single-ended input channel
   switch (ch)
