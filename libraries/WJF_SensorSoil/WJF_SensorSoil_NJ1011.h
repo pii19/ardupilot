@@ -19,7 +19,8 @@ public:
 private:
     // get a reading
     bool get_reading();
-    void write_command();
+    void write_wakeup();
+    void write_measure();
 
     AP_HAL::UARTDriver *uart = nullptr;
     uint32_t last_reading_ms = 0;
