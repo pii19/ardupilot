@@ -34,7 +34,6 @@ WJF_SensorSoil_NJ1011::WJF_SensorSoil_NJ1011(WJF_SensorSoil::WJF_SensorSoil_Stat
     if (uart != nullptr) {
         uart->begin(serial_manager.find_baudrate(AP_SerialManager::SerialProtocol_None, 0));
 //        hal.scheduler->delay(5000);
-//        write_command();
         last_reading_ms = AP_HAL::millis();
     }
 }
@@ -60,22 +59,21 @@ bool WJF_SensorSoil_NJ1011::get_reading()
     float sum = 0;
     bool fget = false;
     int16_t nbytes = uart->available();
-    gcs().send_text(MAV_SEVERITY_CRITICAL, "serial available %d bytes.", nbytes);
+//    gcs().send_text(MAV_SEVERITY_CRITICAL, "serial available %d bytes.", nbytes);
     while (nbytes-- > 0) {
         char c = uart->read();
         if (c == '\n') {
             linebuf[linebuf_len] = 0;
-            if (strcmp(linebuf, "OK") == 0) {	//WAKEUP�����ǂݎ̂�
-                linebuf_len = 0;
-                gcs().send_text(MAV_SEVERITY_CRITICAL, "recieve WAKEUP response.");
+            if (strcmp(linebuf, "OK") == 0) {	//WAKEUP response recieved
+//                gcs().send_text(MAV_SEVERITY_CRITICAL, "recieve WAKEUP response.");
                 write_measure();
 //                continue;
-            } else if (strlen(linebuf)>76) {	//MEASURE�����p�[�X
-                gcs().send_text(MAV_SEVERITY_CRITICAL, "recieve MEASURE response.");
+            } else if (strlen(linebuf)>76) {	//MEASURE response recieved
+//                gcs().send_text(MAV_SEVERITY_CRITICAL, "recieve MEASURE response.");
                 int parse_count = 0;
                 char parsebuf[64];
                 int parsebuf_len = 0;
-                for (int i=0; i<linebuf_len; i++) {
+                for (int i=0; i<linebuf_len; i++) { //parse MEASURE response
                     char pc = linebuf[i];
                     if (pc == ',') {
                         parsebuf[parsebuf_len] = 0;
@@ -101,13 +99,14 @@ bool WJF_SensorSoil_NJ1011::get_reading()
                         parsebuf[parsebuf_len++] = pc;
                     }
                 }
-            } else {	//�S�~����
+            } else {
             }
             linebuf_len = 0;
         } else {
             linebuf[linebuf_len++] = c;
             if (linebuf_len == sizeof(linebuf)) {
                 // too long, discard the line
+//                gcs().send_text(MAV_SEVERITY_CRITICAL, "buffer discard.");
                 linebuf_len = 0;
             }
         }
@@ -115,7 +114,8 @@ bool WJF_SensorSoil_NJ1011::get_reading()
 
     if (fget) {
         // we need to write command for next reading
-        write_wakeup();
+//        write_wakeup();
+        write_measure();
         fget = false;
         return true;
     }
@@ -138,7 +138,7 @@ void WJF_SensorSoil_NJ1011::write_wakeup(void)
     // send WAKEUP
     uart->write("WAKEUP");
     uart->write(0x0a);
-    gcs().send_text(MAV_SEVERITY_CRITICAL, "send WAKEUP command.");
+//    gcs().send_text(MAV_SEVERITY_CRITICAL, "send WAKEUP command.");
 }
 
 void WJF_SensorSoil_NJ1011::write_measure(void)
@@ -146,7 +146,7 @@ void WJF_SensorSoil_NJ1011::write_measure(void)
     // send MEASURE
     uart->write("MEASURE");
     uart->write(0x0a);
-    gcs().send_text(MAV_SEVERITY_CRITICAL, "send MEASURE command.");
+//    gcs().send_text(MAV_SEVERITY_CRITICAL, "send MEASURE command.");
     last_reading_ms = AP_HAL::millis();
 }
 
@@ -156,7 +156,8 @@ void WJF_SensorSoil_NJ1011::update(void)
         // update range_valid state based on distance measured
         last_reading_ms = AP_HAL::millis();
         update_status();
-    } else if (AP_HAL::millis() - last_reading_ms > 15000) {	// timeout
+    } else if (AP_HAL::millis() - last_reading_ms > 5000) {	// timeout
+        last_reading_ms = AP_HAL::millis();
         set_status(WJF_SensorSoil::WJF_SensorSoil_NoData);
         write_wakeup();
     }

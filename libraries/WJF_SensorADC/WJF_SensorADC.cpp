@@ -55,7 +55,7 @@ const AP_Param::GroupInfo WJF_SensorADC::var_info[] = {
     // @Description: Using channels number at I2C ADC
     // @Range: 0 4
     // @User: Standard
-    AP_GROUPINFO("3_CH", 4, WJF_SensorADC, state[0].ch[2], 0),
+    AP_GROUPINFO("3_CH", 4, WJF_SensorADC, state[0].ch[2], 3),
 
     // @Param: ADC_CH4
     // @DisplayName: ADC sensor cahnnels number

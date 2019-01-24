@@ -80,7 +80,7 @@ bool WJF_SensorADC_ADS1015::get_reading(void)
 	for (uint8_t i=0; i<WJF_SENSORADC_USE_CH; i++) {
 		if (state.ch[i] > 0) {
 			if (get_ADS1015(state.ch[i]-1, val)) {
-				if (get_ADS1015(state.ch[i]-1, val)) {	//“ñ“x“Ç‚Ý
+				if (get_ADS1015(state.ch[i]-1, val)) {	//ï¿½ï¿½xï¿½Ç‚ï¿½
 					ival = convert(val);
 //        volt = (float)ival*2.048/2048; // convert to voltage
 					state.voltage[i] = (float)ival*0.001; // convert to voltage
@@ -127,22 +127,24 @@ bool WJF_SensorADC_ADS1015::get_ADS1015(uint8_t ch, be16_t &val)
                     ADS1015_REG_CONFIG_DR_1600SPS   | // 1600 samples per second (default)
                     ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
 
-  // Set PGA/voltage range
-  config |= ADS1015_REG_CONFIG_PGA_1_024V;
 
   // Set single-ended input channel
   switch (ch)
   {
     case (0):
+      config |= ADS1015_REG_CONFIG_PGA_2_048V;
       config |= ADS1015_REG_CONFIG_MUX_SINGLE_0;
       break;
     case (1):
+      config |= ADS1015_REG_CONFIG_PGA_2_048V;
       config |= ADS1015_REG_CONFIG_MUX_SINGLE_1;
       break;
     case (2):
+      config |= ADS1015_REG_CONFIG_PGA_4_096V;
       config |= ADS1015_REG_CONFIG_MUX_SINGLE_2;
       break;
     case (3):
+      config |= ADS1015_REG_CONFIG_PGA_1_024V;
       config |= ADS1015_REG_CONFIG_MUX_SINGLE_3;
       break;
   }

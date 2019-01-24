@@ -18,6 +18,7 @@
 
 #include <AP_HAL/AP_HAL.h>
 #include <AP_HAL/utility/sparse-endian.h>
+#include <GCS_MAVLink/GCS.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -77,6 +78,7 @@ bool WJF_SensorTempHumi_SHT31D::get_reading()
 
     data = readTempAndHumidityPolling(SHT3XD_REPEATABILITY_HIGH, 50);
     if (data.error != SHT3XD_NO_ERROR ) {
+        gcs().send_text(MAV_SEVERITY_CRITICAL, "SHT31D error.");
         return false;
     }
     state.temperature = data.t;
@@ -125,7 +127,7 @@ SHT31D WJF_SensorTempHumi_SHT31D::readTempAndHumidityPolling(SHT31D_Repeatabilit
 		break;
 	}
 
-//	hal.scheduler->delay(5);
+//	hal.scheduler->delay(4);
 
 	if (error == SHT3XD_NO_ERROR) {
 		return readTemperatureAndHumidity();
@@ -152,26 +154,31 @@ SHT31D WJF_SensorTempHumi_SHT31D::readTemperatureAndHumidity()
 {
 	SHT31D result;
 
-	result.t = 0;
-	result.rh = 0;
-
-	SHT31D_ErrorCode error = SHT3XD_NO_ERROR;
-	uint16_t data[2];
-	uint8_t	buf[3];
-	int counter = 0;
-
-	if (error == SHT3XD_NO_ERROR) {
-		for (counter = 0; counter < 2; counter++) {
-			_dev->transfer(nullptr, 0, (uint8_t *)&buf, 3);
-			data[counter] = (buf[0] << 8) | buf[1];
-		}
+//	SHT31D_ErrorCode error = SHT3XD_NO_ERROR;
+//	uint16_t data[2];
+	uint8_t	buf[6];
+//	int counter = 0;
+/*
+    for (counter = 0; counter < 2; counter++) {
+		_dev->transfer(nullptr, 0, (uint8_t *)&buf, 3);
+		data[counter] = (buf[0] << 8) | buf[1];
 	}
 
 	if (error == SHT3XD_NO_ERROR) {
 		result.t = calculateTemperature(data[0]);
 		result.rh = calculateHumidity(data[1]);
 	}
-	result.error = error;
+*/
+    bool ret = _dev->transfer(nullptr, 0, (uint8_t *)&buf, 6);
+    if (ret) {
+		result.t = calculateTemperature(buf[0]<<8|buf[1]);
+		result.rh = calculateHumidity(buf[3]<<8|buf[4]);
+        result.error = SHT3XD_NO_ERROR;
+    } else {
+    	result.t = 0;
+	    result.rh = 0;
+    	result.error = SHT3XD_WIRE_I2C_UNKNOW_ERROR;
+    }
 
 	return result;
 }
