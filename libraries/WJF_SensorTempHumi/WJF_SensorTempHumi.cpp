@@ -103,7 +103,7 @@ bool WJF_SensorTempHumi::_add_backend(WJF_SensorTempHumi_Backend *backend)
         return false;
     }
     if (num_instances == WJF_SENSORTEMPHUMI_MAX_INSTANCES) {
-        AP_HAL::panic("Too many OGR temperature sensor backends");
+        AP_HAL::panic("Too many temperature humidity sensor backends");
     }
 
     drivers[num_instances++] = backend;

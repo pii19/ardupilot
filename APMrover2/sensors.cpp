@@ -57,9 +57,9 @@ void Rover::init_rangefinder(void)
 
 void Rover::init_wjf_sensors(void)
 {
-    wjf_sensor_temphumi.init();
     wjf_sensor_adc.init();
     wjf_sensor_soil.init();
+    wjf_sensor_temphumi.init();
 }
 
 // init beacons used for non-gps position estimates

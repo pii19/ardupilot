@@ -50,6 +50,7 @@ WJF_SensorTempHumi_Backend *WJF_SensorTempHumi_SHT31D::detect(WJF_SensorTempHumi
         if (!sensor->get_reading()) {
             sensor->_dev->get_semaphore()->give();
             delete sensor;
+            gcs().send_text(MAV_SEVERITY_INFO, "SHT31D is not detected");
             return nullptr;
         }
         sensor->_dev->get_semaphore()->give();
@@ -57,13 +58,14 @@ WJF_SensorTempHumi_Backend *WJF_SensorTempHumi_SHT31D::detect(WJF_SensorTempHumi
 
     sensor->init();
 
+    gcs().send_text(MAV_SEVERITY_INFO, "SHT31D is detected");
     return sensor;
 }
 
 void WJF_SensorTempHumi_SHT31D::init()
 {
     // call timer() at 4Hz
-    _dev->register_periodic_callback(1000000,
+    _dev->register_periodic_callback(250000,
                                      FUNCTOR_BIND_MEMBER(&WJF_SensorTempHumi_SHT31D::timer, void));
 }
 
@@ -76,10 +78,14 @@ bool WJF_SensorTempHumi_SHT31D::get_reading()
         return false;
     }
 
-    data = readTempAndHumidityPolling(SHT3XD_REPEATABILITY_HIGH, 50);
+    data = readTempAndHumidityPolling(SHT3XD_REPEATABILITY_MEDIUM, 50);
     if (data.error != SHT3XD_NO_ERROR ) {
-        gcs().send_text(MAV_SEVERITY_CRITICAL, "SHT31D error.");
-        return false;
+        gcs().send_text(MAV_SEVERITY_INFO, "SHT31D error 1st");
+        data = readTempAndHumidityPolling(SHT3XD_REPEATABILITY_LOW, 50);
+        if (data.error != SHT3XD_NO_ERROR ) {
+            gcs().send_text(MAV_SEVERITY_INFO, "SHT31D error 2nd");
+            return false;
+        }
     }
     state.temperature = data.t;
     state.humidity = data.rh;
@@ -114,20 +120,23 @@ SHT31D WJF_SensorTempHumi_SHT31D::readTempAndHumidityPolling(SHT31D_Repeatabilit
 	switch (repeatability)
 	{
 	case SHT3XD_REPEATABILITY_LOW:
-		error = writeCommand(SHT3XD_CMD_POLLING_L);
+//		error = writeCommand(SHT3XD_CMD_POLLING_L);
+		error = writeCommand(SHT3XD_CMD_CLOCK_STRETCH_L);
 		break;
 	case SHT3XD_REPEATABILITY_MEDIUM:
-		error = writeCommand(SHT3XD_CMD_POLLING_M);
+//		error = writeCommand(SHT3XD_CMD_POLLING_M);
+		error = writeCommand(SHT3XD_CMD_CLOCK_STRETCH_M);
 		break;
 	case SHT3XD_REPEATABILITY_HIGH:
-		error = writeCommand(SHT3XD_CMD_POLLING_H);
+//		error = writeCommand(SHT3XD_CMD_POLLING_H);
+		error = writeCommand(SHT3XD_CMD_CLOCK_STRETCH_H);
 		break;
 	default:
 		error = SHT3XD_PARAM_WRONG_REPEATABILITY;
 		break;
 	}
 
-//	hal.scheduler->delay(4);
+//	hal.scheduler->delay(5);
 
 	if (error == SHT3XD_NO_ERROR) {
 		return readTemperatureAndHumidity();

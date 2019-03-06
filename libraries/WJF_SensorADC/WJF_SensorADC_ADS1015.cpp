@@ -62,7 +62,7 @@ WJF_SensorADC_Backend *WJF_SensorADC_ADS1015::detect(WJF_SensorADC::WJF_SensorAD
 void WJF_SensorADC_ADS1015::init()
 {
     // call timer() at 4Hz
-    _dev->register_periodic_callback(1000000,
+    _dev->register_periodic_callback(250000,
                                      FUNCTOR_BIND_MEMBER(&WJF_SensorADC_ADS1015::timer, void));
 }
 
@@ -80,10 +80,10 @@ bool WJF_SensorADC_ADS1015::get_reading(void)
 	for (uint8_t i=0; i<WJF_SENSORADC_USE_CH; i++) {
 		if (state.ch[i] > 0) {
 			if (get_ADS1015(state.ch[i]-1, val)) {
-				if (get_ADS1015(state.ch[i]-1, val)) {	//��x�ǂ�
+				if (get_ADS1015(state.ch[i]-1, val)) {
 					ival = convert(val);
 //        volt = (float)ival*2.048/2048; // convert to voltage
-					state.voltage[i] = (float)ival*0.001; // convert to voltage
+					state.voltage[i] = (float)ival*0.001*2; // convert to real scaling voltage
 //        temp = ((volt*1000) - 1705)/-8.2; // convert to celsius value
 //					state.temperature[i] = ((float)ival - 1705)/-8.2; // convert to celsius value
 //        temp = 0.0005*(temp^2) - 0.0299*temp - 1.3426; // correct celsius value
@@ -123,9 +123,9 @@ bool WJF_SensorADC_ADS1015::get_ADS1015(uint8_t ch, be16_t &val)
                     ADS1015_REG_CONFIG_CLAT_NONLAT  | // Non-latching (default val)
                     ADS1015_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
                     ADS1015_REG_CONFIG_CMODE_TRAD   | // Traditional comparator (default val)
-//                    ADS1015_REG_CONFIG_DR_1600SPS; // 1600 samples per second (default)
-                    ADS1015_REG_CONFIG_DR_1600SPS   | // 1600 samples per second (default)
-                    ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
+                    ADS1015_REG_CONFIG_DR_1600SPS; // 1600 samples per second (default)
+//                    ADS1015_REG_CONFIG_DR_1600SPS   | // 1600 samples per second (default)
+//                    ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
 
 
   // Set single-ended input channel
@@ -150,7 +150,7 @@ bool WJF_SensorADC_ADS1015::get_ADS1015(uint8_t ch, be16_t &val)
   }
 
   // Set 'start single-conversion' bit
-  config |= ADS1015_REG_CONFIG_OS_SINGLE;
+//  config |= ADS1015_REG_CONFIG_OS_SINGLE;
 
   // Write config register to the ADC
     uint8_t b[3] = { ADS1015_REG_POINTER_CONFIG, uint8_t(config>>8), uint8_t(config&0xff) };
