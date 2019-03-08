@@ -345,7 +345,7 @@ void Rover::update_sensor_status_flags(void)
 
     if (ahrs.initialised() && !ahrs.healthy()) {
         // AHRS subsystem is unhealthy
-        control_sensors_health &= ~MAV_SYS_STATUS_AHRS;
+//        control_sensors_health &= ~MAV_SYS_STATUS_AHRS;
     }
 
     if (rangefinder.num_sensors() > 0) {
