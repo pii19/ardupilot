@@ -311,6 +311,9 @@ private:
     uint32_t control_sensors_enabled;
     uint32_t control_sensors_health;
 
+    // Airspeed Sensors  for W-JFoP
+    AP_Airspeed airspeed;
+
     // Conditional command
     // A value used in condition commands (eg delay, change alt, etc.)
     // For example in a change altitude command, it is the altitude to change to.
@@ -510,6 +513,7 @@ private:
     void Log_Write_RC(void);
     void Log_Write_Error(uint8_t sub_system, uint8_t error_code);
     void Log_Write_Baro(void);
+    void Log_Write_Airspeed(void);
     void Log_Write_Home_And_Origin();
     void Log_Write_GuidedTarget(uint8_t target_type, const Vector3f& pos_target, const Vector3f& vel_target);
     void Log_Write_WheelEncoder();
@@ -545,6 +549,8 @@ private:
     void read_receiver_rssi(void);
     void compass_cal_update(void);
     void accel_cal_update(void);
+    void read_airspeed(void);
+    void zero_airspeed(bool in_startup);
     void read_rangefinders(void);
     void read_wjf_sensorsoil(void);
     void init_proximity();

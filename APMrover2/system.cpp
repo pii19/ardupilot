@@ -86,6 +86,9 @@ void Rover::init_ardupilot()
     log_init();
 #endif
 
+    // initialise airspeed sensor for W-JFoP
+    airspeed.init();
+
     // initialise compass
     init_compass();
 
@@ -264,6 +267,14 @@ void Rover::startup_INS_ground(void)
 
     ins.init(scheduler.get_loop_rate_hz());
     ahrs.reset();
+
+    if (airspeed.enabled()) {
+        // initialize airspeed sensor for W-JFoP
+        // --------------------------
+        zero_airspeed(true);
+    } else {
+        gcs().send_text(MAV_SEVERITY_WARNING,"No airspeed");
+    }
 }
 
 void Rover::check_usb_mux(void)

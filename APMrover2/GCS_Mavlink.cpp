@@ -162,6 +162,22 @@ void Rover::send_servo_out(mavlink_channel_t chan)
 
 void Rover::send_vfr_hud(mavlink_channel_t chan)
 {
+#if true    // for W-JFoP
+    float aspeed;
+    if (airspeed.enabled()) {
+        aspeed = airspeed.get_airspeed();
+    } else if (!ahrs.airspeed_estimate(&aspeed)) {
+        aspeed = 0;
+    }
+    mavlink_msg_vfr_hud_send(
+        chan,
+        aspeed,
+        ahrs.groundspeed(),
+        (ahrs.yaw_sensor / 100) % 360,
+        g2.motors.get_throttle(),
+        current_loc.alt / 100.0f,
+        0);
+#else
     mavlink_msg_vfr_hud_send(
         chan,
         gps.ground_speed(),
@@ -170,6 +186,7 @@ void Rover::send_vfr_hud(mavlink_channel_t chan)
         g2.motors.get_throttle(),
         current_loc.alt / 100.0f,
         0);
+#endif
 }
 
 // report simulator state

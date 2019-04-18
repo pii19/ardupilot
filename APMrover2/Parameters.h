@@ -88,6 +88,7 @@ public:
         k_param_NavEKF2,
         k_param_g2,                 // 2nd block of parameters
         k_param_NavEKF3,
+        k_param_airspeed,  // AP_Airspeed parameters for W-JFoP
 
         // 140: battery controls
         k_param_battery_monitoring = 140,   // deprecated, can be deleted

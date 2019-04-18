@@ -191,6 +191,47 @@ void Rover::accel_cal_update() {
     }
 }
 
+/*
+  ask airspeed sensor for a new value for W-JFoP
+ */
+void Rover::read_airspeed(void)
+{
+    if (airspeed.enabled()) {
+        airspeed.read();
+        if (should_log(MASK_LOG_IMU)) {
+            Log_Write_Airspeed();
+        }
+
+        // supply a new temperature to the barometer from the digital
+        // airspeed sensor if we can
+        float temperature;
+        if (airspeed.get_temperature(temperature)) {
+            barometer.set_external_temperature(temperature);
+        }
+    }
+#if false
+    // we calculate airspeed errors (and thus target_airspeed_cm) even
+    // when airspeed is disabled as TECS may be using synthetic
+    // airspeed for a quadplane transition
+    calc_airspeed_errors();
+    
+    // update smoothed airspeed estimate
+    float aspeed;
+    if (ahrs.airspeed_estimate(&aspeed)) {
+        smoothed_airspeed = smoothed_airspeed * 0.8f + aspeed * 0.2f;
+    }
+#endif
+}
+
+void Rover::zero_airspeed(bool in_startup)
+{
+    airspeed.calibrate(in_startup);
+    read_airspeed();
+    // update barometric calibration with new airspeed supplied temperature
+    barometer.update_calibration();
+    gcs().send_text(MAV_SEVERITY_INFO,"Airspeed calibration started");
+}
+
 // read the rangefinders
 void Rover::read_rangefinders(void)
 {
@@ -287,6 +328,9 @@ void Rover::update_sensor_status_flags(void)
     if (g.compass_enabled) {
         control_sensors_present |= MAV_SYS_STATUS_SENSOR_3D_MAG;  // compass present
     }
+    if (airspeed.enabled()) {	// add for W-JFoP
+        control_sensors_present |= MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE;
+    }
     if (gps.status() > AP_GPS::NO_GPS) {
         control_sensors_present |= MAV_SYS_STATUS_SENSOR_GPS;
     }
@@ -307,6 +351,12 @@ void Rover::update_sensor_status_flags(void)
                                                          ~MAV_SYS_STATUS_SENSOR_XY_POSITION_CONTROL &
                                                          ~MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS &
                                                          ~MAV_SYS_STATUS_LOGGING);
+
+    // add for W-JFoP
+    if (airspeed.enabled() && airspeed.use()) {
+        control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE;
+    }
+
     if (control_mode->attitude_stabilized()) {
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL; // 3D angular rate control
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION; // 3D angular rate control
@@ -363,6 +413,11 @@ void Rover::update_sensor_status_flags(void)
     }
     if (rover.DataFlash.logging_failed()) {
         control_sensors_health &= ~MAV_SYS_STATUS_LOGGING;
+    }
+
+    // add for W-JFoP
+    if (airspeed.all_healthy()) {
+        control_sensors_health |= MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE;
     }
 
     if (!initialised || ins.calibrating()) {
